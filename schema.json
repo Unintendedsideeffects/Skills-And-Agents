@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Configuration Schema",
+  "description": "Schema for defining AI agent configurations with YAML frontmatter and prompt content",
+  "type": "object",
+  "required": ["name", "description", "model", "prompt"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique identifier for the agent (kebab-case recommended)",
+      "pattern": "^[a-z0-9-]+$",
+      "examples": ["obsidian-note-organizer", "project-owner-advisor"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of when to use this agent, including usage examples",
+      "minLength": 50
+    },
+    "model": {
+      "type": "string",
+      "description": "AI model to use for this agent",
+      "enum": ["sonnet", "opus", "haiku", "gpt-4", "gpt-3.5-turbo"],
+      "default": "sonnet"
+    },
+    "color": {
+      "type": "string",
+      "description": "Display color for UI representation",
+      "enum": ["red", "orange", "yellow", "green", "blue", "purple", "pink", "gray"],
+      "default": "blue"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "The main system prompt that defines the agent's behavior, expertise, and output format",
+      "minLength": 100
+    },
+    "tags": {
+      "type": "array",
+      "description": "Optional tags for categorization and search",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "examples": [["code-review", "sre", "reliability"]]
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the agent configuration",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["1.0.0"]
+    },
+    "author": {
+      "type": "string",
+      "description": "Author or maintainer of this agent configuration"
+    },
+    "tools": {
+      "type": "array",
+      "description": "Tools or capabilities this agent requires",
+      "items": {
+        "type": "string"
+      },
+      "examples": [["bash", "read", "write", "grep"]]
+    }
+  },
+  "additionalProperties": false
+}

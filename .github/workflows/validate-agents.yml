@@ -1,0 +1,62 @@
+name: Validate Agents
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'agents/**'
+      - 'schema.json'
+      - 'scripts/validate_agents.py'
+      - '.github/workflows/validate-agents.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'agents/**'
+      - 'schema.json'
+      - 'scripts/validate_agents.py'
+      - '.github/workflows/validate-agents.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml jsonschema
+
+    - name: Validate agent configurations
+      run: |
+        python scripts/validate_agents.py
+
+    - name: Check for required fields
+      run: |
+        echo "Checking all agents have required documentation..."
+        for agent in agents/*.md; do
+          if ! grep -q "^name:" "$agent"; then
+            echo "❌ Missing 'name' field in $agent"
+            exit 1
+          fi
+          if ! grep -q "^description:" "$agent"; then
+            echo "❌ Missing 'description' field in $agent"
+            exit 1
+          fi
+          echo "✅ $(basename $agent) has required fields"
+        done
+
+    - name: Summary
+      if: success()
+      run: |
+        echo "✅ All agent configurations are valid!"
+        echo ""
+        echo "Validated agents:"
+        ls -1 agents/*.md | xargs -n1 basename
