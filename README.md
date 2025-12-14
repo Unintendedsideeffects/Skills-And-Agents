@@ -1,6 +1,8 @@
-# AI Agents
+# AI Agents & Agent Manager
 
 A curated collection of specialized AI agent configurations for building powerful, context-aware AI tooling. Each agent is a carefully crafted system prompt designed to give AI assistants specific expertise and consistent behavior patterns.
+
+**New!** 🎉 Check out [Agent Manager](AGENT_MANAGER.md) - a beautiful TUI for discovering, organizing, and managing your agents and skills across repositories!
 
 ## What Are These Agents?
 
@@ -14,15 +16,28 @@ Each agent configuration includes:
 
 ## Quick Start
 
-### Installation
+### Method 1: Agent Manager (Recommended)
 
-Clone this repository and use the install script to symlink agents to your `~/.claude/agents/` directory:
+The easiest way to discover and manage agents across your repositories:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/agents.git
+# Install Agent Manager
 cd agents
+python -m venv venv
+source venv/bin/activate
+pip install -e .
 
+# Launch the TUI
+agent-manager
+```
+
+See [Agent Manager Guide](AGENT_MANAGER.md) for full documentation.
+
+### Method 2: Installation Script
+
+Or use the classic install script to symlink agents to your `~/.claude/agents/` directory:
+
+```bash
 # Install all agents
 ./install.sh install
 
@@ -34,18 +49,12 @@ cd agents
 
 # List available agents
 ./install.sh list
+
+# Remove all agents
+./install.sh uninstall
 ```
 
 The install script creates symlinks, so when you `git pull` updates, your agents automatically stay current!
-
-**Uninstall:**
-```bash
-# Remove all agents
-./install.sh uninstall
-
-# Remove specific agents
-./install.sh uninstall obsidian-note-organizer
-```
 
 ### Using Agents in Your CLI Tool
 

@@ -1,0 +1,364 @@
+/* Agent Manager Theme - Claude Code Aesthetic */
+
+/* Color palette */
+$background: #0d1117;
+$surface: #161b22;
+$surface-light: #21262d;
+$surface-hover: #30363d;
+$border: #30363d;
+$primary: #58a6ff;
+$primary-dim: #388bfd;
+$secondary: #8b949e;
+$text: #e6edf3;
+$text-muted: #8b949e;
+$text-dim: #6e7681;
+$success: #3fb950;
+$warning: #d29922;
+$error: #f85149;
+$purple: #a371f7;
+$pink: #db61a2;
+
+/* Base screen */
+Screen {
+    background: $background;
+    color: $text;
+}
+
+/* Header */
+Header {
+    background: $surface;
+    color: $text;
+    height: 3;
+    border-bottom: solid $border;
+}
+
+Header .title {
+    color: $primary;
+    text-style: bold;
+}
+
+/* Footer */
+Footer {
+    background: $surface;
+    border-top: solid $border;
+}
+
+FooterKey .footer-key--key {
+    background: $surface-light;
+    color: $text;
+}
+
+FooterKey .footer-key--description {
+    color: $text-muted;
+}
+
+/* Content containers */
+.content-panel {
+    background: $surface;
+    border: solid $border;
+    margin: 1;
+    padding: 1;
+}
+
+/* Stat cards on dashboard */
+.stat-card {
+    background: $surface;
+    border: solid $border;
+    margin: 0 1 1 0;
+    padding: 1 2;
+    height: 7;
+    width: 1fr;
+}
+
+.stat-card .stat-value {
+    color: $primary;
+    text-style: bold;
+    text-align: center;
+}
+
+.stat-card .stat-label {
+    color: $text-muted;
+    text-align: center;
+}
+
+/* List view items */
+ListView {
+    background: $background;
+    scrollbar-background: $surface;
+    scrollbar-color: $surface-light;
+    scrollbar-color-hover: $surface-hover;
+}
+
+ListView > ListItem {
+    background: $surface;
+    color: $text;
+    padding: 1 2;
+    margin: 0 0 1 0;
+}
+
+ListView > ListItem:hover {
+    background: $surface-hover;
+}
+
+ListView > ListItem.-selected {
+    background: $surface-light;
+    border-left: thick $primary;
+}
+
+ListView > ListItem:focus {
+    background: $surface-light;
+}
+
+/* Agent/Skill list item layout */
+.item-row {
+    height: 3;
+}
+
+.item-color-dot {
+    width: 3;
+    color: $primary;
+}
+
+.item-name {
+    width: 1fr;
+    text-style: bold;
+}
+
+.item-model {
+    width: 10;
+    color: $text-muted;
+}
+
+/* Link status badges */
+.badge {
+    padding: 0 1;
+    margin-left: 1;
+}
+
+.badge-global {
+    background: $success;
+    color: $background;
+}
+
+.badge-project {
+    background: $warning;
+    color: $background;
+}
+
+.badge-unlinked {
+    background: $surface-light;
+    color: $text-dim;
+}
+
+/* Search input */
+#search-input {
+    dock: top;
+    height: 3;
+    background: $surface;
+    border: solid $border;
+    margin: 0 0 1 0;
+}
+
+#search-input:focus {
+    border: solid $primary;
+}
+
+Input {
+    background: $surface;
+    border: solid $border;
+    color: $text;
+}
+
+Input:focus {
+    border: solid $primary;
+}
+
+Input > .input--placeholder {
+    color: $text-dim;
+}
+
+/* Preview pane */
+#preview-pane {
+    width: 50%;
+    background: $surface;
+    border-left: solid $border;
+    padding: 1 2;
+}
+
+#preview-pane Markdown {
+    background: transparent;
+}
+
+#preview-pane .preview-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+#preview-pane .preview-meta {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+/* Horizontal layout containers */
+Horizontal {
+    height: auto;
+}
+
+/* Vertical layout containers */
+Vertical {
+    height: auto;
+}
+
+/* Main content area */
+#main-content {
+    height: 1fr;
+}
+
+#list-container {
+    width: 50%;
+}
+
+/* Settings screen */
+.settings-section {
+    background: $surface;
+    border: solid $border;
+    margin: 1;
+    padding: 1 2;
+}
+
+.settings-title {
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+.path-item {
+    padding: 0 1;
+    margin: 0 0 1 0;
+}
+
+.path-enabled {
+    color: $success;
+}
+
+.path-disabled {
+    color: $text-dim;
+}
+
+/* Buttons */
+Button {
+    background: $surface-light;
+    color: $text;
+    border: solid $border;
+    margin: 0 1;
+}
+
+Button:hover {
+    background: $surface-hover;
+}
+
+Button:focus {
+    border: solid $primary;
+}
+
+Button.-primary {
+    background: $primary-dim;
+    color: $background;
+    border: none;
+}
+
+Button.-primary:hover {
+    background: $primary;
+}
+
+/* Color indicators for agents */
+.color-red { color: #f85149; }
+.color-orange { color: #f0883e; }
+.color-yellow { color: #d29922; }
+.color-green { color: #3fb950; }
+.color-blue { color: #58a6ff; }
+.color-purple { color: #a371f7; }
+.color-pink { color: #db61a2; }
+.color-gray { color: #8b949e; }
+
+/* Modal dialogs */
+ModalScreen {
+    align: center middle;
+}
+
+#modal-container {
+    background: $surface;
+    border: solid $border;
+    padding: 2;
+    width: 60;
+    height: auto;
+    max-height: 80%;
+}
+
+#modal-title {
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+#modal-content {
+    margin-bottom: 1;
+}
+
+#modal-buttons {
+    align: right middle;
+}
+
+/* Tab navigation (future use) */
+TabPane {
+    background: $background;
+}
+
+Tabs {
+    background: $surface;
+    border-bottom: solid $border;
+}
+
+Tab {
+    background: transparent;
+    color: $text-muted;
+    padding: 1 2;
+}
+
+Tab:hover {
+    color: $text;
+}
+
+Tab.-active {
+    color: $primary;
+    border-bottom: solid $primary;
+}
+
+/* Loading indicator */
+LoadingIndicator {
+    color: $primary;
+}
+
+/* Toast notifications */
+Toast {
+    background: $surface;
+    border: solid $border;
+    color: $text;
+}
+
+Toast.-information {
+    border-left: thick $primary;
+}
+
+Toast.-success {
+    border-left: thick $success;
+}
+
+Toast.-warning {
+    border-left: thick $warning;
+}
+
+Toast.-error {
+    border-left: thick $error;
+}

@@ -33,7 +33,7 @@ Usage: $0 [OPTIONS]
 Install agent configurations by symlinking to ~/.claude/agents/
 
 OPTIONS:
-    install [agent-names...]    Install specific agents (or all if none specified)
+    install [agent-names...|all]    Install specific agents (or all if none specified or "all")
     uninstall [agent-names...]  Remove specific agents (or all if none specified)
     list                        List available agents
     status                      Show installation status
@@ -41,6 +41,7 @@ OPTIONS:
 
 EXAMPLES:
     $0 install                           # Install all agents
+    $0 install all                       # Install all agents (explicit)
     $0 install sre-code-reviewer         # Install specific agent
     $0 uninstall obsidian-note-organizer # Remove specific agent
     $0 list                              # Show available agents
@@ -146,8 +147,21 @@ cmd_install() {
         mkdir -p "$CLAUDE_AGENTS_DIR"
     fi
 
-    if [ $# -eq 0 ]; then
-        # Install all agents
+    local install_all_requested=false
+    for agent_name in "$@"; do
+        local normalized
+        normalized=$(printf '%s' "$agent_name" | tr '[:upper:]' '[:lower:]')
+        if [ "$normalized" = "all" ]; then
+            install_all_requested=true
+            break
+        fi
+    done
+
+    if [ $# -eq 0 ] || [ "$install_all_requested" = true ]; then
+        if [ "$install_all_requested" = true ] && [ $# -gt 1 ]; then
+            print_warning "\"all\" specified; installing all agents and ignoring other arguments"
+        fi
+
         print_info "Installing all agents to $CLAUDE_AGENTS_DIR"
         echo ""
         for agent in "$AGENTS_SOURCE"/*.md; do
