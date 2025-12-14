@@ -1,17 +1,29 @@
 # Getting Started with Agent Manager
 
-## Installation (1 minute)
+## Installation (30 seconds)
 
 ```bash
 cd /home/malcolm/Code/Agents
-python -m venv venv
-source venv/bin/activate
-pip install -e .
+uv sync
 ```
 
-That's it! You now have the `agent-manager` command.
+That's it! You now have the `agent-manager` command ready to use with `uv run`.
+
+Alternatively, if you want to activate the virtual environment:
+
+```bash
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
+```
 
 ## First Run (2 minutes)
+
+```bash
+uv run agent-manager
+```
+
+Or if you activated the environment:
 
 ```bash
 agent-manager

@@ -23,11 +23,16 @@ The easiest way to discover and manage agents across your repositories:
 ```bash
 # Install Agent Manager
 cd agents
-python -m venv venv
-source venv/bin/activate
-pip install -e .
+uv sync
+uv run agent-manager
+```
 
-# Launch the TUI
+Or if you prefer to activate the environment:
+
+```bash
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 agent-manager
 ```
 

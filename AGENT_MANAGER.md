@@ -37,32 +37,37 @@ A beautiful, Claude Code-inspired Terminal User Interface (TUI) for discovering,
 
 ### Prerequisites
 - Python 3.10+
-- pip or pipx
+- [uv](https://docs.astral.sh/uv/) (fast Python package manager)
 
 ### From Source
 
-Clone and install in development mode:
+Clone and install with uv:
 
 ```bash
 cd /home/malcolm/Code/Agents
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -e .
+uv sync
 ```
 
-### Activate Command
-
-After installation, you can run:
+To activate the virtual environment:
 
 ```bash
-agent-manager        # Launch the TUI (no args needed)
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv pip install -e .
 ```
 
-Or with the venv:
+### Running Agent Manager
+
+After installation with `uv sync`, you can run:
 
 ```bash
-source venv/bin/activate
-agent-manager
+uv run agent-manager        # Launch the TUI
+```
+
+Or if you activated the virtual environment:
+
+```bash
+agent-manager               # Launch the TUI (no args needed)
 ```
 
 ## Quick Start
@@ -148,31 +153,31 @@ Configure the application:
 
 ### Launch TUI
 ```bash
-agent-manager
-agent-manager --scan ~/ExtraProjects
+uv run agent-manager
+uv run agent-manager --scan ~/ExtraProjects
 ```
 
 ### List Agents
 ```bash
-agent-manager list-agents              # Pretty print
-agent-manager list-agents --json       # JSON output
+uv run agent-manager list-agents              # Pretty print
+uv run agent-manager list-agents --json       # JSON output
 ```
 
 ### List Skills
 ```bash
-agent-manager list-skills
-agent-manager list-skills --json
+uv run agent-manager list-skills
+uv run agent-manager list-skills --json
 ```
 
 ### Scan Paths
 ```bash
-agent-manager scan ~/Code ~/Projects
-agent-manager scan ~/Code --json       # JSON output
+uv run agent-manager scan ~/Code ~/Projects
+uv run agent-manager scan ~/Code --json       # JSON output
 ```
 
 ### View Configuration
 ```bash
-agent-manager config-show
+uv run agent-manager config-show
 ```
 
 ## File Organization
@@ -386,21 +391,25 @@ Dev:
 ### Running Tests
 
 ```bash
-source venv/bin/activate
-pytest tests/
+uv run pytest tests/
+```
+
+Or with more verbose output:
+
+```bash
+uv run pytest tests/ -v
 ```
 
 ### Running in Development
 
 ```bash
-source venv/bin/activate
-python -m agent_manager
+uv run agent-manager
 ```
 
 Or with live reloading (requires textual-dev):
 
 ```bash
-textual run --dev agent_manager.app:AgentManagerApp
+uv run textual run --dev agent_manager.app:AgentManagerApp
 ```
 
 ## Troubleshooting

@@ -5,13 +5,19 @@
 ### 1. Install
 ```bash
 cd /path/to/Agents  # Navigate to this repo
-python -m venv venv
-source venv/bin/activate
-pip install -e .
+uv sync
 ```
 
 ### 2. First Run
 ```bash
+uv run agent-manager
+```
+
+Or activate the environment first:
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -e .
 agent-manager
 ```
 
