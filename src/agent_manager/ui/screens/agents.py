@@ -15,17 +15,11 @@ class AgentsScreen(Screen):
     """List and manage agents."""
 
     BINDINGS = [
-        ("d", "app.push_screen('dashboard')", "Dashboard"),
-        ("s", "app.push_screen('skills')", "Skills"),
-        ("comma", "app.push_screen('settings')", "Settings"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("g", "link_global", "Link Global"),
         ("u", "unlink", "Unlink"),
         ("slash", "focus_search", "Search"),
-        ("escape", "clear_search", "Clear"),
-        ("r", "refresh", "Refresh"),
-        ("q", "app.quit", "Quit"),
     ]
 
     class AgentSelected(Message):
@@ -55,7 +49,10 @@ class AgentsScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when screen is mounted."""
+        self.app.sub_title = "Agents"
         self._rebuild_list()
+        # Focus the list for immediate keyboard navigation
+        self.query_one("#agent-list", ListView).focus()
 
     def _rebuild_list(self) -> None:
         """Rebuild the agent list with current filter."""
@@ -70,6 +67,17 @@ class AgentsScreen(Screen):
                 if filter_lower in a.metadata.name.lower()
                 or filter_lower in a.metadata.description.lower()
             ]
+
+        if not agents:
+            # Show empty state
+            preview = self.query_one("#preview-pane", PreviewPane)
+            if self._filter_text:
+                preview.show_message("No agents match your search")
+            elif not self.app.config.scan_paths:
+                preview.show_message("No scan paths configured\n\nPress [,] to add paths in Settings")
+            else:
+                preview.show_message("No agents found\n\nAdd .claude/agents/ folders to your scan paths")
+            return
 
         for agent in agents:
             list_view.append(AgentListItem(agent))
@@ -123,14 +131,17 @@ class AgentsScreen(Screen):
         search = self.query_one("#search-input", Input)
         search.focus()
 
-    def action_clear_search(self) -> None:
-        """Clear search and refocus list."""
+    def on_key(self, event) -> None:
+        """Handle key events for search clearing."""
+        # Clear search on escape when search is focused
         search = self.query_one("#search-input", Input)
-        search.value = ""
-        self._filter_text = ""
-        self._rebuild_list()
-        list_view = self.query_one("#agent-list", ListView)
-        list_view.focus()
+        if event.key == "escape" and search.has_focus and self._filter_text:
+            search.value = ""
+            self._filter_text = ""
+            self._rebuild_list()
+            list_view = self.query_one("#agent-list", ListView)
+            list_view.focus()
+            event.stop()
 
     def action_link_global(self) -> None:
         """Link the selected agent globally."""
@@ -174,8 +185,3 @@ class AgentsScreen(Screen):
                 self.notify("Failed to unlink", severity="error")
         else:
             self.notify("Agent is not linked", severity="information")
-
-    def action_refresh(self) -> None:
-        """Refresh the agent list."""
-        self.app.run_worker(self.app.scan_all())
-        self.notify("Refreshing...")

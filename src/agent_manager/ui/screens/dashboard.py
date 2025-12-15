@@ -11,13 +11,7 @@ from agent_manager.ui.widgets.stat_card import StatCard
 class DashboardScreen(Screen):
     """Main dashboard showing overview statistics."""
 
-    BINDINGS = [
-        ("a", "app.push_screen('agents')", "Agents"),
-        ("s", "app.push_screen('skills')", "Skills"),
-        ("comma", "app.push_screen('settings')", "Settings"),
-        ("r", "refresh", "Refresh"),
-        ("q", "app.quit", "Quit"),
-    ]
+    BINDINGS = []  # Navigation handled by app-level bindings
 
     def compose(self) -> ComposeResult:
         """Compose the dashboard screen."""
@@ -35,8 +29,8 @@ class DashboardScreen(Screen):
             with Vertical(classes="content-panel"):
                 yield Static("Agent Manager", classes="preview-title")
                 yield Static(
-                    "Press [bold]a[/] for Agents, [bold]s[/] for Skills, "
-                    "[bold],[/] for Settings, [bold]r[/] to Refresh",
+                    "Press [bold]a[/] Agents  [bold]s[/] Skills  [bold]m[/] MCP  [bold]p[/] Sessions  "
+                    "[bold],[/] Settings  [bold]r[/] Refresh  [bold]q[/] Quit",
                     classes="preview-meta",
                 )
 
@@ -49,6 +43,7 @@ class DashboardScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when screen is mounted."""
+        self.app.sub_title = "Dashboard"
         self.update_stats()
 
     def update_stats(self) -> None:
@@ -83,8 +78,3 @@ class DashboardScreen(Screen):
             paths_list.update(paths_text)
         else:
             paths_list.update("No scan paths configured. Press [bold],[/] to add paths.")
-
-    def action_refresh(self) -> None:
-        """Refresh the dashboard."""
-        self.app.run_worker(self.app.scan_all())
-        self.notify("Refreshing...")

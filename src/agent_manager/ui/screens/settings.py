@@ -29,14 +29,10 @@ class SettingsScreen(Screen):
     """Settings and configuration screen."""
 
     BINDINGS = [
-        ("d", "app.push_screen('dashboard')", "Dashboard"),
-        ("a", "app.push_screen('agents')", "Agents"),
-        ("s", "app.push_screen('skills')", "Skills"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("x", "remove_path", "Remove"),
         ("t", "toggle_path", "Toggle"),
-        ("q", "app.quit", "Quit"),
     ]
 
     def __init__(self, **kwargs) -> None:
@@ -83,6 +79,7 @@ class SettingsScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when screen is mounted."""
+        self.app.sub_title = "Settings"
         self._rebuild_paths_list()
 
     def _rebuild_paths_list(self) -> None:

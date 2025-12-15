@@ -14,17 +14,11 @@ class SkillsScreen(Screen):
     """List and manage skills."""
 
     BINDINGS = [
-        ("d", "app.push_screen('dashboard')", "Dashboard"),
-        ("a", "app.push_screen('agents')", "Agents"),
-        ("comma", "app.push_screen('settings')", "Settings"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("g", "link_global", "Link Global"),
         ("u", "unlink", "Unlink"),
         ("slash", "focus_search", "Search"),
-        ("escape", "clear_search", "Clear"),
-        ("r", "refresh", "Refresh"),
-        ("q", "app.quit", "Quit"),
     ]
 
     def __init__(self, **kwargs) -> None:
@@ -47,7 +41,10 @@ class SkillsScreen(Screen):
 
     def on_mount(self) -> None:
         """Called when screen is mounted."""
+        self.app.sub_title = "Skills"
         self._rebuild_list()
+        # Focus the list for immediate keyboard navigation
+        self.query_one("#skill-list", ListView).focus()
 
     def _rebuild_list(self) -> None:
         """Rebuild the skill list with current filter."""
@@ -62,6 +59,17 @@ class SkillsScreen(Screen):
                 if filter_lower in s.metadata.name.lower()
                 or filter_lower in s.metadata.description.lower()
             ]
+
+        if not skills:
+            # Show empty state
+            preview = self.query_one("#preview-pane", PreviewPane)
+            if self._filter_text:
+                preview.show_message("No skills match your search")
+            elif not self.app.config.scan_paths:
+                preview.show_message("No scan paths configured\n\nPress [,] to add paths in Settings")
+            else:
+                preview.show_message("No skills found\n\nAdd .claude/skills/ folders to your scan paths")
+            return
 
         for skill in skills:
             list_view.append(SkillListItem(skill))
@@ -115,14 +123,17 @@ class SkillsScreen(Screen):
         search = self.query_one("#search-input", Input)
         search.focus()
 
-    def action_clear_search(self) -> None:
-        """Clear search and refocus list."""
+    def on_key(self, event) -> None:
+        """Handle key events for search clearing."""
+        # Clear search on escape when search is focused
         search = self.query_one("#search-input", Input)
-        search.value = ""
-        self._filter_text = ""
-        self._rebuild_list()
-        list_view = self.query_one("#skill-list", ListView)
-        list_view.focus()
+        if event.key == "escape" and search.has_focus and self._filter_text:
+            search.value = ""
+            self._filter_text = ""
+            self._rebuild_list()
+            list_view = self.query_one("#skill-list", ListView)
+            list_view.focus()
+            event.stop()
 
     def action_link_global(self) -> None:
         """Link the selected skill globally."""
@@ -166,8 +177,3 @@ class SkillsScreen(Screen):
                 self.notify("Failed to unlink", severity="error")
         else:
             self.notify("Skill is not linked", severity="information")
-
-    def action_refresh(self) -> None:
-        """Refresh the skill list."""
-        self.app.run_worker(self.app.scan_all())
-        self.notify("Refreshing...")

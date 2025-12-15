@@ -112,6 +112,7 @@ ListView > ListItem:focus {
 /* Agent/Skill list item layout */
 .item-row {
     height: 3;
+    width: 100%;
 }
 
 .item-color-dot {
@@ -121,12 +122,14 @@ ListView > ListItem:focus {
 
 .item-name {
     width: 1fr;
+    min-width: 20;
     text-style: bold;
 }
 
 .item-model {
-    width: 10;
+    width: 15;
     color: $text-muted;
+    text-align: right;
 }
 
 /* Link status badges */
@@ -146,6 +149,22 @@ ListView > ListItem:focus {
 }
 
 .badge-unlinked {
+    background: $surface-light;
+    color: $text-dim;
+}
+
+/* MCP sync status badges */
+.badge-synced {
+    background: $success;
+    color: $background;
+}
+
+.badge-partial {
+    background: $warning;
+    color: $background;
+}
+
+.badge-disabled {
     background: $surface-light;
     color: $text-dim;
 }

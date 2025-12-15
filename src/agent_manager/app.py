@@ -1,19 +1,18 @@
 """Main Textual application for Agent Manager."""
 
-import asyncio
-from pathlib import Path
-
 from textual.app import ComposeResult, App
 from textual.binding import Binding
 from textual.widgets import Header, Footer
 
-from agent_manager.core import ConfigManager, AgentSkillScanner, SymlinkManager
-from agent_manager.models import Agent, Skill, AppConfig
+from agent_manager.core import ConfigManager, AgentSkillScanner, SymlinkManager, MCPManager, SessionManager
+from agent_manager.models import Agent, Skill, AppConfig, MCPServer
 from agent_manager.ui.screens import (
     DashboardScreen,
     AgentsScreen,
     SkillsScreen,
     SettingsScreen,
+    MCPScreen,
+    SessionsScreen,
 )
 
 
@@ -26,10 +25,13 @@ class AgentManagerApp(App):
     CSS_PATH = "ui/styles/theme.tcss"
 
     BINDINGS = [
-        Binding("d", "switch_screen('dashboard')", "Dashboard", show=True),
-        Binding("a", "switch_screen('agents')", "Agents", show=True),
-        Binding("s", "switch_screen('skills')", "Skills", show=True),
-        Binding("comma", "switch_screen('settings')", "Settings", show=True),
+        Binding("d", "goto('dashboard')", "Dashboard", show=True),
+        Binding("a", "goto('agents')", "Agents", show=True),
+        Binding("s", "goto('skills')", "Skills", show=True),
+        Binding("m", "goto('mcp')", "MCP", show=True),
+        Binding("p", "goto('sessions')", "Sessions", show=True),
+        Binding("comma", "goto('settings')", "Settings", show=True),
+        Binding("escape", "go_back", "Back", show=True, priority=True),
         Binding("r", "refresh", "Refresh", show=True),
         Binding("q", "quit", "Quit", show=True),
     ]
@@ -38,6 +40,8 @@ class AgentManagerApp(App):
         "dashboard": DashboardScreen,
         "agents": AgentsScreen,
         "skills": SkillsScreen,
+        "mcp": MCPScreen,
+        "sessions": SessionsScreen,
         "settings": SettingsScreen,
     }
 
@@ -49,6 +53,8 @@ class AgentManagerApp(App):
         self.symlink_manager = SymlinkManager(
             claude_dir=self.config.claude_dir,
         )
+        self.mcp_manager = MCPManager()
+        self.session_manager = SessionManager()
         self.agents: list[Agent] = []
         self.skills: list[Skill] = []
 
@@ -135,12 +141,21 @@ class AgentManagerApp(App):
         except Exception as e:
             self.notify(f"Scan failed: {e}", severity="error")
 
-    def action_switch_screen(self, screen_name: str) -> None:
-        """Switch to a named screen."""
+    def action_goto(self, screen_name: str) -> None:
+        """Navigate to a named screen using switch (not push)."""
         try:
             self.switch_screen(screen_name)
         except ValueError:
             self.notify(f"Unknown screen: {screen_name}", severity="error")
+
+    def action_go_back(self) -> None:
+        """Go back to the previous screen, or to dashboard."""
+        if len(self.screen_stack) > 1:
+            self.pop_screen()
+        else:
+            # If on the only screen, go to dashboard
+            if self.screen.name != "dashboard":
+                self.switch_screen("dashboard")
 
     def action_refresh(self) -> None:
         """Trigger a refresh scan."""

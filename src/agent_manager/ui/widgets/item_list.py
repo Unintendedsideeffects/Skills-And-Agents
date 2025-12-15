@@ -1,10 +1,11 @@
-"""List item widgets for agents and skills."""
+"""List item widgets for agents, skills, and MCP servers."""
 
 from textual.app import ComposeResult
 from textual.widgets import ListItem, Static
 from textual.containers import Horizontal
 
 from agent_manager.models import Agent, Skill, LinkScope
+from agent_manager.models.mcp_server import MCPServer, SyncStatus
 
 
 class AgentListItem(ListItem):
@@ -64,3 +65,40 @@ class SkillListItem(ListItem):
         elif status == LinkScope.PROJECT:
             return "PROJECT"
         return ""
+
+
+class MCPServerListItem(ListItem):
+    """A single MCP server entry in the list."""
+
+    def __init__(self, server: MCPServer, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.server = server
+
+    def compose(self) -> ComposeResult:
+        """Compose the MCP server list item."""
+        # Status dot: ● enabled, ○ disabled
+        dot = "●" if self.server.enabled else "○"
+        dot_class = "color-green" if self.server.enabled else "color-gray"
+
+        # Sync badge
+        badge_text, badge_class = self._get_badge_info()
+
+        with Horizontal(classes="item-row"):
+            yield Static(dot, classes=f"item-color-dot {dot_class}")
+            yield Static(self.server.id, classes="item-name")
+            yield Static(self.server.transport, classes="item-model")
+            if badge_text:
+                yield Static(badge_text, classes=f"badge {badge_class}")
+
+    def _get_badge_info(self) -> tuple[str, str]:
+        """Get badge text and class based on sync status."""
+        status = self.server.sync_status
+
+        if status == SyncStatus.SYNCED:
+            return "SYNCED", "badge-synced"
+        elif status == SyncStatus.PARTIAL:
+            return "PARTIAL", "badge-partial"
+        elif status == SyncStatus.DISABLED:
+            return "DISABLED", "badge-disabled"
+        else:
+            return "", ""
