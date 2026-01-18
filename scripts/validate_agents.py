@@ -5,7 +5,7 @@ Validate agent configuration files against the schema.
 This script:
 1. Loads all .md files from the agents/ directory
 2. Parses YAML frontmatter and content
-3. Validates against schema.json
+3. Validates against agent-manager/schema.json
 4. Reports any validation errors
 """
 
@@ -66,7 +66,7 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
     agents_dir = repo_root / 'agents'
-    schema_path = repo_root / 'schema.json'
+    schema_path = repo_root / 'agent-manager' / 'schema.json'
 
     # Load schema
     if not schema_path.exists():

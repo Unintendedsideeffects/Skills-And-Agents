@@ -5,7 +5,7 @@ set -e
 # Symlinks agent configurations to ~/.claude/agents/
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_SOURCE="$SCRIPT_DIR/agents"
+AGENTS_SOURCE="$SCRIPT_DIR/../agents"
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 
 # Colors for output
