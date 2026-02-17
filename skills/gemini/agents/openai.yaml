@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gemini"
+  short_description: "Delegate work to Gemini CLI and review the resulting diffs."
+  default_prompt: "Delegate this task to Gemini, then review and evaluate all resulting changes."
