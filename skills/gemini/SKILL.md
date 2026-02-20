@@ -5,36 +5,70 @@ description: Run tasks through the Gemini CLI and then review, verify, and evalu
 
 # Gemini
 
-## Overview
-
-Delegate a task to Gemini using the provided CLI command, then validate and evaluate the resulting changes before reporting back.
+Delegate a task to Gemini CLI in yolo (auto-approve) mode, then validate and evaluate the resulting changes before reporting back.
 
 ## Workflow
 
 ### 1) Prepare the prompt
 
-- Restate the task in a single, focused prompt.
-- Include any constraints, file paths, or expected outputs.
+- Restate the task as a single, focused instruction.
+- Include relevant file paths, constraints, and expected outputs.
+- Keep the prompt concrete — Gemini will act on it directly without further confirmation.
 
-### 2) Run Gemini
+### 2) Choose execution path
 
-Use the exact command format:
-
+**Path A — running inside Claude Code (you ARE Claude Code):**
+Do NOT spawn a nested claude process. Use the Bash tool to run the script directly:
 ```bash
-gemini --yolo "{prompt}"
+skills/gemini/scripts/run.sh "Your task prompt here"
 ```
+Optional model override:
+```bash
+skills/gemini/scripts/run.sh "Your task prompt here" --model gemini-2.5-pro
+```
+Or set `GEMINI_MODEL` in the environment to avoid repeating the flag.
 
-Replace `{prompt}` with the prepared prompt text.
+**Path B — running as an external agent (bash, CI, orchestrator):**
+```bash
+scripts/run.sh "Your task prompt here"
+```
+The script validates that `gemini` is on PATH and runs `gemini --yolo "<prompt>"`.
 
 ### 3) Review the result
 
-- Check for file changes and scope: `git status -sb`
-- Inspect diffs: `git diff --stat` and `git diff`
-- Verify that changes match the request and follow project conventions.
-- Identify risks, regressions, or missing tests.
+After Gemini finishes, inspect what changed:
+
+```bash
+git status -sb
+git diff --stat
+git diff
+```
+
+- Verify changes match the requested scope.
+- Look for unintended file deletions, renames, or edits outside the target area.
+- Check that project conventions (formatting, naming, test coverage) are preserved.
 
 ### 4) Evaluate and report
 
-- Summarize what changed and whether it meets the request.
-- Flag any concerns or follow-up actions.
-- If changes are unexpected or out of scope, ask the user how to proceed before reverting.
+- Summarize what Gemini changed and whether it satisfies the request.
+- Flag any concerns: regressions, missing tests, out-of-scope edits.
+- If changes are unexpected or destructive, ask the user before reverting.
+
+## Model Selection
+
+| Model | Best for |
+|---|---|
+| `gemini-2.5-pro` (default) | Complex multi-file refactors, reasoning-heavy tasks |
+| `gemini-2.0-flash` | Fast, focused edits; simple one-file tasks |
+
+Override via `--model` flag or `GEMINI_MODEL` env var.
+
+## Safety Notes
+
+- `--yolo` skips all confirmation prompts. Gemini will write files immediately.
+- Always run in a clean git state so changes are easy to inspect and revert.
+- If the working tree is dirty before the run, stash first: `git stash`.
+
+## Files
+
+- `scripts/run.sh`: validate gemini is installed and invoke `gemini --yolo`.

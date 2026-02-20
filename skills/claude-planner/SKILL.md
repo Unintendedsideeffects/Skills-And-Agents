@@ -10,15 +10,28 @@ Generate deterministic plans with Claude and hand back a strict JSON envelope fo
 ## Workflow
 
 1. Capture inputs:
-- `user_request`: the exact task to plan.
-- `executor_constraints`: tools, environment limits, and safety constraints for the executor.
-- `schema`: default to `references/plan-schema.json`.
-2. Run the planner script:
-```bash
-scripts/plan.sh \
-  --request "Implement feature X safely" \
-  --constraints "Use only local files, run tests before edits"
-```
+   - `user_request`: the exact task to plan.
+   - `executor_constraints`: tools, environment limits, and safety constraints for the executor.
+   - `schema`: load from `references/plan-schema.json`.
+
+2. Choose execution path based on context:
+
+   **Path A — running inside Claude Code (you ARE Claude Code):**
+   Do NOT invoke `plan.sh` or any subprocess. `CLAUDECODE` is set, which blocks nested
+   CLI invocations.  Instead, act as the planner directly:
+   - Load the schema from `references/plan-schema.json`.
+   - Apply the Prompt Contract below to generate the plan JSON in your response.
+   - Validate the output against the Validation Requirements below.
+   - Wrap it in the handoff envelope and return it. Do not wrap in markdown.
+
+   **Path B — running as an external agent (bash, CI, orchestrator, etc.):**
+   ```bash
+   scripts/plan.sh \
+     --request "Implement feature X safely" \
+     --constraints "Use only local files, run tests before edits"
+   ```
+   The script calls `claude --print` as a subprocess and emits the handoff JSON.
+
 3. Return the JSON output directly. Do not wrap it in markdown:
 ```json
 {"type":"plan","planner":"claude","plan":{...}}
@@ -44,7 +57,7 @@ Reject the plan when any check fails:
 - Step IDs are duplicated.
 - Required fields have invalid types.
 
-## CLI Notes
+## CLI Notes (Path B only)
 
 - Default Claude command: `claude --print`.
 - Override command with `--cmd "claude-code --print"` or environment variable `CLAUDE_PLANNER_CMD`.

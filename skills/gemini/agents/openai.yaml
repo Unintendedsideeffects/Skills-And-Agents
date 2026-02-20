@@ -1,4 +1,4 @@
 interface:
   display_name: "Gemini"
-  short_description: "Delegate work to Gemini CLI and review the resulting diffs."
-  default_prompt: "Delegate this task to Gemini, then review and evaluate all resulting changes."
+  short_description: "Delegate a task to Gemini CLI (yolo mode) and review the resulting diffs."
+  default_prompt: "Delegate this task to Gemini using skills/gemini/scripts/run.sh, then review all resulting changes with git diff and report findings."

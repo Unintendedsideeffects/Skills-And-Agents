@@ -270,6 +270,7 @@ def main() -> int:
     args = parse_args()
     schema = load_schema(Path(args.schema))
     prompt = build_prompt(args.request, args.constraints, schema)
+
     raw_output = run_claude(args.cmd, prompt, args.timeout_seconds)
 
     if args.raw_output_file:

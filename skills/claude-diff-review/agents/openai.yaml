@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Diff Review"
+  short_description: "Run Claude CLI for branch diff reviews."
+  default_prompt: "Use $claude-diff-review to review master...fork-drift and return severity-ordered findings with file refs."
