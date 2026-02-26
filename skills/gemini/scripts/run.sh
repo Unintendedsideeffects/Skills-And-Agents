@@ -32,9 +32,9 @@ if ! command -v gemini >/dev/null 2>&1; then
   exit 127
 fi
 
-CMD=(gemini --yolo)
+CMD=(gemini --yolo --prompt "$PROMPT")
 if [[ -n "$MODEL" ]]; then
   CMD+=(--model "$MODEL")
 fi
 
-exec "${CMD[@]}" "$PROMPT"
+exec "${CMD[@]}"

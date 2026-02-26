@@ -144,10 +144,15 @@ cmd=(
   --permission-mode bypassPermissions
   --no-session-persistence
   --model "$MODEL"
-  --fallback-model "$FALLBACK_MODEL"
   --effort "$EFFORT"
   --output-format "$OUTPUT_FORMAT"
 )
+
+if [[ -n "$FALLBACK_MODEL" && "$FALLBACK_MODEL" != "$MODEL" ]]; then
+  cmd+=(--fallback-model "$FALLBACK_MODEL")
+elif [[ -n "$FALLBACK_MODEL" && "$FALLBACK_MODEL" == "$MODEL" ]]; then
+  echo "run_claude_task.sh: skipping fallback model because it matches --model ($MODEL)" >&2
+fi
 
 if [[ "$OUTPUT_FORMAT" == "stream-json" ]]; then
   cmd+=(--include-partial-messages)
@@ -159,6 +164,7 @@ attempt=1
 max_attempts=$((RETRIES + 1))
 while (( attempt <= max_attempts )); do
   log_tmp="$(mktemp)"
+  echo "run_claude_task.sh: attempt ${attempt}/${max_attempts} starting (timeout ${TIMEOUT_SECONDS}s)" >&2
   set +e
   (
     cd "$WORKDIR"

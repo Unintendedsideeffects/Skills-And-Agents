@@ -126,8 +126,8 @@ fi
 cmd=(
   gemini
   --prompt "$PROMPT_TEXT"
-  --approval-mode yolo
-  --sandbox false
+  --yolo
+  --sandbox=false
   --output-format "$OUTPUT_FORMAT"
 )
 
@@ -139,6 +139,7 @@ attempt=1
 max_attempts=$((RETRIES + 1))
 while (( attempt <= max_attempts )); do
   log_tmp="$(mktemp)"
+  echo "run_gemini_task.sh: attempt ${attempt}/${max_attempts} starting (timeout ${TIMEOUT_SECONDS}s)" >&2
   set +e
   (
     cd "$WORKDIR"

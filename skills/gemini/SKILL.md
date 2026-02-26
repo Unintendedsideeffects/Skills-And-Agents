@@ -32,7 +32,7 @@ Or set `GEMINI_MODEL` in the environment to avoid repeating the flag.
 ```bash
 scripts/run.sh "Your task prompt here"
 ```
-The script validates that `gemini` is on PATH and runs `gemini --yolo "<prompt>"`.
+The script validates that `gemini` is on PATH and runs `gemini --yolo --prompt "<prompt>"`.
 
 ### 3) Review the result
 
@@ -71,4 +71,4 @@ Override via `--model` flag or `GEMINI_MODEL` env var.
 
 ## Files
 
-- `scripts/run.sh`: validate gemini is installed and invoke `gemini --yolo`.
+- `scripts/run.sh`: validate gemini is installed and invoke `gemini --yolo --prompt "<prompt>"`.

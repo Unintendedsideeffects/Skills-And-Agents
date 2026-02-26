@@ -150,7 +150,7 @@ case "$PROFILE" in
     claude_timeout=2400
     claude_retries=1
     claude_backoff=8
-    claude_fallback="sonnet"
+    claude_fallback="haiku"
     gemini_timeout=1800
     gemini_retries=1
     gemini_backoff=8
@@ -165,11 +165,11 @@ if [[ -n "$OUTPUT_LOG" ]]; then
 fi
 
 run_claude() {
+  local selected_claude_model="${MODEL_OVERRIDE:-sonnet}"
   args=(
     --prompt-file "$prompt_tmp"
     --workdir "$WORKDIR"
     --effort "$claude_effort"
-    --fallback-model "$claude_fallback"
     --output-format "$OUTPUT_FORMAT"
     --timeout "$claude_timeout"
     --retries "$claude_retries"
@@ -177,6 +177,9 @@ run_claude() {
   )
   if [[ -n "$MODEL_OVERRIDE" ]]; then
     args+=(--model "$MODEL_OVERRIDE")
+  fi
+  if [[ -n "$claude_fallback" && "$claude_fallback" != "$selected_claude_model" ]]; then
+    args+=(--fallback-model "$claude_fallback")
   fi
   if [[ -n "$OUTPUT_LOG" ]]; then
     args+=(--output "$OUTPUT_LOG")
