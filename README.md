@@ -61,6 +61,21 @@ Or use the classic install script to symlink agents to your `~/.claude/agents/` 
 
 The install script creates symlinks, so when you `git pull` updates, your agents automatically stay current!
 
+### Method 3: Pre-commit Skill Sync
+
+If you want local skill installs to stay aligned automatically on every commit, enable the repo hook:
+
+```bash
+pre-commit install
+```
+
+That hook runs `scripts/sync_skills.py` and syncs the canonical `skills/` tree into:
+- `~/.claude/skills/`
+- `~/.codex/skills/`
+- `~/.gemini/skills/`
+
+It updates same-named skills in place and leaves unrelated extra local skills alone.
+
 ### Using Agents in Your CLI Tool
 
 ```python
