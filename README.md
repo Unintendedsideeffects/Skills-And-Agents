@@ -181,6 +181,18 @@ A syntax-aware code transformation specialist. Always prefers AST-based operatio
 
 ---
 
+## Available Skills
+
+### 🔍 GitHub Request Copilot Review
+**File:** `skills/gh-request-copilot-review/SKILL.md`
+**Use When:** You need to request or re-request GitHub Copilot review on the PR for the current branch and confirm GitHub recorded the request
+
+A GitHub-focused helper skill that wraps the `gh` CLI workflow for asking Copilot to review a pull request again after new commits. It verifies GitHub auth, resolves the current branch PR by default, re-requests the Copilot reviewer, and can optionally poll for a fresh review.
+
+**Best For:** Re-triggering Copilot review, confirming review-request events, current-branch PR workflows
+
+---
+
 ## Agent Configuration Format
 
 All agents follow a standardized format validated against `agent-manager/schema.json`:
@@ -226,6 +238,11 @@ Fork this repo and add your own specialized agents for your domain.
 │   ├── obsidian-note-organizer.md
 │   ├── project-owner-advisor.md
 │   └── sre-code-reviewer.md
+├── skills/                    # Reusable skill directories
+│   ├── claude-diff-review/
+│   ├── gemini/
+│   ├── gh-request-copilot-review/
+│   └── scrum-master/
 ├── scripts/                   # Utility scripts
 │   ├── install.sh             # Installation script for symlinks
 │   └── validate_agents.py     # Schema validation script
