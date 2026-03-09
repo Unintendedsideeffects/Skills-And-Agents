@@ -1,0 +1,4 @@
+interface:
+  display_name: "Copilot Delegate"
+  short_description: "Launch bounded local Copilot workers with tmux and logs."
+  default_prompt: "Use $copilot-delegate to run a bounded local Copilot task in tmux and then review the resulting diff."
