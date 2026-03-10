@@ -68,8 +68,7 @@ class AgentSkillScanner:
             result.errors.append((root, "Path is not a directory"))
             return result
 
-        # Run blocking I/O in thread pool
-        await asyncio.to_thread(self._scan_recursive, root, root, result)
+        self._scan_recursive(root, root, result)
         return result
 
     async def scan_all(self, paths: list[Path]) -> ScanResult:

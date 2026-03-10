@@ -29,8 +29,8 @@ class DashboardScreen(Screen):
             with Vertical(classes="content-panel"):
                 yield Static("Agent Manager", classes="preview-title")
                 yield Static(
-                    "Press [bold]a[/] Agents  [bold]s[/] Skills  [bold]m[/] MCP  [bold]p[/] Sessions  "
-                    "[bold],[/] Settings  [bold]r[/] Refresh  [bold]q[/] Quit",
+                    "Press [bold]a[/] Agents  [bold]s[/] Skills  [bold],[/] Settings  "
+                    "[bold]r[/] Refresh  [bold]q[/] Quit",
                     classes="preview-meta",
                 )
 

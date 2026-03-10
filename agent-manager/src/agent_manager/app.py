@@ -4,15 +4,13 @@ from textual.app import ComposeResult, App
 from textual.binding import Binding
 from textual.widgets import Header, Footer
 
-from agent_manager.core import ConfigManager, AgentSkillScanner, SymlinkManager, MCPManager, SessionManager
-from agent_manager.models import Agent, Skill, AppConfig, MCPServer
+from agent_manager.core import ConfigManager, AgentSkillScanner, SymlinkManager
+from agent_manager.models import Agent, Skill
 from agent_manager.ui.screens import (
     DashboardScreen,
     AgentsScreen,
     SkillsScreen,
     SettingsScreen,
-    MCPScreen,
-    SessionsScreen,
 )
 
 
@@ -28,8 +26,6 @@ class AgentManagerApp(App):
         Binding("d", "goto('dashboard')", "Dashboard", show=True),
         Binding("a", "goto('agents')", "Agents", show=True),
         Binding("s", "goto('skills')", "Skills", show=True),
-        Binding("m", "goto('mcp')", "MCP", show=True),
-        Binding("p", "goto('sessions')", "Sessions", show=True),
         Binding("comma", "goto('settings')", "Settings", show=True),
         Binding("escape", "go_back", "Back", show=True, priority=True),
         Binding("r", "refresh", "Refresh", show=True),
@@ -40,8 +36,6 @@ class AgentManagerApp(App):
         "dashboard": DashboardScreen,
         "agents": AgentsScreen,
         "skills": SkillsScreen,
-        "mcp": MCPScreen,
-        "sessions": SessionsScreen,
         "settings": SettingsScreen,
     }
 
@@ -53,8 +47,6 @@ class AgentManagerApp(App):
         self.symlink_manager = SymlinkManager(
             claude_dir=self.config.claude_dir,
         )
-        self.mcp_manager = MCPManager()
-        self.session_manager = SessionManager()
         self.agents: list[Agent] = []
         self.skills: list[Skill] = []
 

@@ -7,7 +7,6 @@ from textual.containers import VerticalScroll
 from textual.widgets import Static, Markdown
 
 from agent_manager.models import Agent, Skill
-from agent_manager.models.mcp_server import MCPServer, SyncStatus, TARGETS
 
 
 def _shorten_path(path: Path) -> str:
@@ -133,71 +132,3 @@ class PreviewPane(VerticalScroll):
             projects = len(skill.project_links)
             return f"**Status:** 🟡 {status} ({projects} project{'s' if projects > 1 else ''})"
         return "**Status:** ⚪ UNLINKED"
-
-    def show_mcp_server(self, server: MCPServer) -> None:
-        """Update preview with MCP server details."""
-        placeholder = self.query_one("#preview-placeholder", Static)
-        content = self.query_one("#preview-content", Markdown)
-
-        placeholder.display = False
-        content.display = True
-
-        # Build sync status display
-        sync_status = self._format_mcp_sync_status(server)
-
-        # Build environment display
-        env_display = ""
-        if server.env:
-            env_lines = [f"  {k}={v}" for k, v in server.env.items()]
-            env_display = "\n".join(env_lines)
-        else:
-            env_display = "  (none)"
-
-        # Build tags display
-        tags_display = ", ".join(server.tags) if server.tags else "(none)"
-
-        # Build args display
-        args_display = " ".join(server.args) if server.args else "(none)"
-
-        md = f"""# {server.display_name}
-
-**ID:** `{server.id}`
-**Command:** `{server.command}`
-**Transport:** {server.transport}
-**Type:** {server.type}
-**Enabled:** {"Yes" if server.enabled else "No"}
-
-## Sync Status
-
-{sync_status}
-
-## Arguments
-
-```
-{args_display}
-```
-
-## Environment
-
-```
-{env_display}
-```
-
-## Tags
-
-{tags_display}
-"""
-        content.update(md)
-
-    def _format_mcp_sync_status(self, server: MCPServer) -> str:
-        """Format MCP sync status as a grid."""
-        if not server.synced_to:
-            return "Not synced to any targets"
-
-        lines = []
-        for target, display_name in TARGETS.items():
-            synced = server.synced_to.get(target, False)
-            icon = "✓" if synced else "✗"
-            lines.append(f"  {icon} {display_name}")
-
-        return "\n".join(lines)
