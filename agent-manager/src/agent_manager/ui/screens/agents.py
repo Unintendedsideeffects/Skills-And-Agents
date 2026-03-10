@@ -1,8 +1,9 @@
 """Agents screen for listing and managing agents."""
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, ListView, Static
+from textual.widgets import Header, Footer, Input, ListView, Button, Static
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
 
@@ -15,11 +16,13 @@ class AgentsScreen(Screen):
     """List and manage agents."""
 
     BINDINGS = [
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
-        ("g", "link_global", "Link Global"),
-        ("u", "unlink", "Unlink"),
-        ("slash", "focus_search", "Search"),
+        Binding("j", "cursor_down", "Down"),
+        Binding("down", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up"),
+        Binding("up", "cursor_up", "Up", show=False),
+        Binding("g", "link_global", "Link Global"),
+        Binding("u", "unlink", "Unlink"),
+        Binding("slash", "focus_search", "Search"),
     ]
 
     class AgentSelected(Message):
@@ -42,8 +45,15 @@ class AgentsScreen(Screen):
         with Horizontal(id="main-content"):
             with Vertical(id="list-container"):
                 yield ListView(id="agent-list")
+                with Horizontal(classes="pane-actions pane-actions-left"):
+                    yield Button("Install All On Claude Code", id="bulk-install-claude-agent-btn")
 
-            yield PreviewPane(id="preview-pane")
+            with Vertical(id="preview-column"):
+                yield PreviewPane(id="preview-pane")
+                with Horizontal(classes="pane-actions pane-actions-right"):
+                    yield Static("", classes="action-spacer")
+                    yield Button("Install On Claude Code", id="install-claude-agent-btn")
+                    yield Button("Remove", id="remove-agent-btn", variant="error")
 
         yield Footer()
 
@@ -144,44 +154,120 @@ class AgentsScreen(Screen):
             event.stop()
 
     def action_link_global(self) -> None:
-        """Link the selected agent globally."""
+        """Install the selected agent to Claude Code."""
+        self._install_selected_agent("claude")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle install/remove buttons."""
+        button_id = event.button.id
+        if button_id == "bulk-install-claude-agent-btn":
+            self._install_all_agents("claude")
+        elif button_id == "install-claude-agent-btn":
+            self._install_selected_agent("claude")
+        elif button_id == "remove-agent-btn":
+            self.action_unlink()
+
+    def _install_selected_agent(self, target: str) -> None:
+        """Install the selected agent to one or more targets."""
         if not self._selected_agent:
             self.notify("No agent selected", severity="warning")
             return
 
-        result = self.app.symlink_manager.link_agent_global(
-            self._selected_agent.source_path
-        )
+        targets = ["claude", "codex"] if target == "all" else [target]
+        outcomes: list[str] = []
 
-        if result.value == "success":
-            self._selected_agent.global_link = (
-                self.app.symlink_manager.global_agents_dir
-                / self._selected_agent.source_path.name
-            )
-            self.notify(f"Linked {self._selected_agent.metadata.name} globally")
-            self._rebuild_list()
-        elif result.value == "already_exists":
-            self.notify("Already linked globally", severity="information")
-        elif result.value == "conflict":
-            self.notify("Conflict: different agent exists at target", severity="error")
+        for current_target in targets:
+            if current_target == "claude":
+                result = self.app.symlink_manager.link_agent_global(
+                    self._selected_agent.source_path
+                )
+                if result.value in {"success", "already_exists"}:
+                    self._selected_agent.global_link = (
+                        self.app.symlink_manager.global_agents_dir
+                        / self._selected_agent.source_path.name
+                    )
+            else:
+                result = self.app.symlink_manager.link_agent_codex(
+                    self._selected_agent.source_path
+                )
+                if result.value in {"success", "already_exists"}:
+                    self._selected_agent.codex_link = (
+                        self.app.symlink_manager.codex_agents_dir
+                        / self._selected_agent.source_path.name
+                    )
+            outcomes.append(f"{current_target}:{result.value}")
+
+        self._refresh_selected_agent_view()
+        self.notify(f"{self._selected_agent.metadata.name}: {', '.join(outcomes)}")
+
+    def _install_all_agents(self, target: str) -> None:
+        """Install all discovered agents to one or more targets."""
+        agents = self.app.agents
+        if not agents:
+            self.notify("No agents available", severity="warning")
+            return
+
+        targets = ["claude", "codex"] if target == "all" else [target]
+        successes = 0
+        conflicts = 0
+
+        for agent in agents:
+            for current_target in targets:
+                if current_target == "claude":
+                    result = self.app.symlink_manager.link_agent_global(agent.source_path)
+                    if result.value in {"success", "already_exists"}:
+                        agent.global_link = (
+                            self.app.symlink_manager.global_agents_dir / agent.source_path.name
+                        )
+                        successes += 1
+                    elif result.value == "conflict":
+                        conflicts += 1
+                else:
+                    result = self.app.symlink_manager.link_agent_codex(agent.source_path)
+                    if result.value in {"success", "already_exists"}:
+                        agent.codex_link = (
+                            self.app.symlink_manager.codex_agents_dir / agent.source_path.name
+                        )
+                        successes += 1
+                    elif result.value == "conflict":
+                        conflicts += 1
+
+        self._refresh_selected_agent_view()
+        summary = f"Installed {len(agents)} agent(s)"
+        if len(targets) > 1:
+            summary += " on Claude Code and Codex"
         else:
-            self.notify(f"Failed to link: {result.value}", severity="error")
+            summary += f" on {targets[0]}"
+        summary += f" ({successes} link operations"
+        if conflicts:
+            summary += f", {conflicts} conflicts"
+        summary += ")"
+        self.notify(summary)
 
     def action_unlink(self) -> None:
-        """Unlink the selected agent."""
+        """Remove the selected agent from Claude Code and Codex."""
         if not self._selected_agent:
             self.notify("No agent selected", severity="warning")
             return
 
-        if self._selected_agent.global_link:
-            success = self.app.symlink_manager.unlink_agent_global(
-                self._selected_agent.source_path.name
-            )
-            if success:
-                self._selected_agent.global_link = None
-                self.notify(f"Unlinked {self._selected_agent.metadata.name}")
-                self._rebuild_list()
-            else:
-                self.notify("Failed to unlink", severity="error")
+        removed_claude = self.app.symlink_manager.unlink_agent_global(
+            self._selected_agent.source_path.name
+        )
+        removed_codex = self.app.symlink_manager.unlink_agent_codex(
+            self._selected_agent.source_path.name
+        )
+
+        if removed_claude or removed_codex:
+            self._selected_agent.global_link = None
+            self._selected_agent.codex_link = None
+            self._refresh_selected_agent_view()
+            self.notify(f"Removed {self._selected_agent.metadata.name}")
         else:
-            self.notify("Agent is not linked", severity="information")
+            self.notify("Agent is not installed", severity="information")
+
+    def _refresh_selected_agent_view(self) -> None:
+        """Refresh list and preview after agent changes."""
+        self._rebuild_list()
+        if self._selected_agent:
+            preview = self.query_one("#preview-pane", PreviewPane)
+            preview.show_agent(self._selected_agent)

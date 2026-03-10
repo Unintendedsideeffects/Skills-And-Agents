@@ -59,8 +59,8 @@ class DashboardScreen(Screen):
         skills_card.update_value(len(app.skills))
 
         # Update global count
-        global_count = sum(1 for a in app.agents if a.global_link)
-        global_count += sum(1 for s in app.skills if s.global_link)
+        global_count = sum(1 for a in app.agents if a.installed_targets)
+        global_count += sum(1 for s in app.skills if s.installed_targets)
         global_card = self.query_one("#global-count", StatCard)
         global_card.update_value(global_count)
 

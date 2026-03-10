@@ -91,6 +91,11 @@ class AppConfig:
         """Get Claude directory path."""
         return Path.home() / ".claude"
 
+    @property
+    def codex_dir(self) -> Path:
+        """Get Codex directory path."""
+        return Path.home() / ".codex"
+
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         return {

@@ -7,6 +7,7 @@ from textual.widgets import Header, Footer
 from agent_manager.core import ConfigManager, AgentSkillScanner, SymlinkManager
 from agent_manager.models import Agent, Skill
 from agent_manager.ui.screens import (
+    LoadingScreen,
     DashboardScreen,
     AgentsScreen,
     SkillsScreen,
@@ -33,6 +34,7 @@ class AgentManagerApp(App):
     ]
 
     SCREENS = {
+        "loading": LoadingScreen,
         "dashboard": DashboardScreen,
         "agents": AgentsScreen,
         "skills": SkillsScreen,
@@ -46,6 +48,7 @@ class AgentManagerApp(App):
         self.scanner = AgentSkillScanner()
         self.symlink_manager = SymlinkManager(
             claude_dir=self.config.claude_dir,
+            codex_dir=self.config.codex_dir,
         )
         self.agents: list[Agent] = []
         self.skills: list[Skill] = []
@@ -57,9 +60,19 @@ class AgentManagerApp(App):
 
     async def on_mount(self) -> None:
         """Called when app starts."""
-        await self.push_screen("dashboard")
-        # Start initial scan in the background
-        self.run_worker(self.scan_all(), exclusive=True)
+        await self.push_screen("loading")
+        self.call_after_refresh(self._start_initial_load)
+
+    def _start_initial_load(self) -> None:
+        """Start the initial scan after the first screen paint."""
+        self.run_worker(self._initial_load(), exclusive=True)
+
+    async def _initial_load(self) -> None:
+        """Run startup scan before showing the main dashboard."""
+        try:
+            await self.scan_all()
+        finally:
+            self.switch_screen("dashboard")
 
     async def scan_all(self) -> None:
         """Scan all configured paths for agents and skills."""
@@ -80,8 +93,13 @@ class AgentManagerApp(App):
             return
 
         try:
-            # Run async scan
-            result = await self.scanner.scan_all(enabled_paths)
+            worker = self.run_worker(
+                lambda: self.scanner.scan_all_sync(enabled_paths),
+                group="scan-io",
+                exclusive=True,
+                thread=True,
+            )
+            result = await worker.wait()
 
             self.agents = result.agents
             self.skills = result.skills
@@ -89,11 +107,13 @@ class AgentManagerApp(App):
             # Update symlink status for each agent and skill
             for agent in self.agents:
                 status = self.symlink_manager.get_agent_link_status(agent.source_path)
-                agent.global_link = status.get("global_target")
+                agent.global_link = status.get("claude_target")
+                agent.codex_link = status.get("codex_target")
 
             for skill in self.skills:
                 status = self.symlink_manager.get_skill_link_status(skill.source_dir)
-                skill.global_link = status.get("global_target")
+                skill.global_link = status.get("claude_target")
+                skill.codex_link = status.get("codex_target")
 
             # Update scan path stats
             for scan_path in self.config.scan_paths:
@@ -135,6 +155,8 @@ class AgentManagerApp(App):
 
     def action_goto(self, screen_name: str) -> None:
         """Navigate to a named screen using switch (not push)."""
+        if self.screen.name == "loading":
+            return
         try:
             self.switch_screen(screen_name)
         except ValueError:
@@ -151,6 +173,8 @@ class AgentManagerApp(App):
 
     def action_refresh(self) -> None:
         """Trigger a refresh scan."""
+        if self.screen.name == "loading":
+            return
         self.run_worker(self.scan_all(), exclusive=True)
 
 

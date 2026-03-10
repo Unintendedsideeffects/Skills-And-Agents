@@ -58,6 +58,10 @@ class AgentSkillScanner:
         Returns:
             ScanResult with discovered agents and skills
         """
+        return self.scan_path_sync(root)
+
+    def scan_path_sync(self, root: Path) -> ScanResult:
+        """Synchronous implementation of single-path scanning."""
         result = ScanResult()
 
         if not root.exists():
@@ -81,17 +85,21 @@ class AgentSkillScanner:
         Returns:
             Combined ScanResult from all paths
         """
-        tasks = [self.scan_path(p) for p in paths]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return self.scan_all_sync(paths)
 
+    def scan_all_sync(self, paths: list[Path]) -> ScanResult:
+        """Synchronous implementation of multi-path scanning."""
         combined = ScanResult()
-        for r in results:
-            if isinstance(r, Exception):
-                combined.errors.append((Path("."), str(r)))
-            else:
-                combined.agents.extend(r.agents)
-                combined.skills.extend(r.skills)
-                combined.errors.extend(r.errors)
+        for path in paths:
+            try:
+                result = self.scan_path_sync(path)
+            except Exception as exc:
+                combined.errors.append((path, str(exc)))
+                continue
+
+            combined.agents.extend(result.agents)
+            combined.skills.extend(result.skills)
+            combined.errors.extend(result.errors)
 
         return combined
 

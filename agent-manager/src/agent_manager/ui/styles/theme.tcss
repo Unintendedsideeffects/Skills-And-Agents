@@ -60,6 +60,27 @@ FooterKey .footer-key--description {
     padding: 1;
 }
 
+#loading-screen {
+    align: center middle;
+    height: 1fr;
+    width: 100%;
+}
+
+.loading-title {
+    color: $primary;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.loading-subtitle {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+#loading-indicator {
+    color: $primary;
+}
+
 /* Stat cards on dashboard */
 .stat-card {
     background: $surface;
@@ -198,10 +219,11 @@ Input > .input--placeholder {
 
 /* Preview pane */
 #preview-pane {
-    width: 50%;
     background: $surface;
     border-left: solid $border;
     padding: 1 2;
+    height: 1fr;
+    width: 100%;
 }
 
 #preview-pane Markdown {
@@ -236,6 +258,35 @@ Vertical {
 
 #list-container {
     width: 50%;
+}
+
+#preview-column {
+    width: 50%;
+    background: $surface;
+}
+
+.pane-actions {
+    height: 3;
+    padding: 0 1;
+    margin-top: 1;
+}
+
+.pane-actions-left {
+    width: 100%;
+}
+
+.pane-actions-right {
+    width: 100%;
+}
+
+.action-spacer {
+    width: 1fr;
+}
+
+.pane-actions Button {
+    min-width: 20;
+    margin-right: 1;
+    content-align: center middle;
 }
 
 /* Settings screen */

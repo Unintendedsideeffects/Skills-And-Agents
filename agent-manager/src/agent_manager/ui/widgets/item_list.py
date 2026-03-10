@@ -29,10 +29,15 @@ class AgentListItem(ListItem):
 
     def _get_badge_text(self) -> str:
         """Get badge text based on link status."""
+        targets = self.agent.installed_targets
+        if len(targets) == 2:
+            return "BOTH"
+        if targets == ["claude"]:
+            return "CLAUDE"
+        if targets == ["codex"]:
+            return "CODEX"
         status = self.agent.link_status
-        if status == LinkScope.GLOBAL:
-            return "GLOBAL"
-        elif status == LinkScope.PROJECT:
+        if status == LinkScope.PROJECT:
             return "PROJECT"
         return ""
 
@@ -58,9 +63,14 @@ class SkillListItem(ListItem):
 
     def _get_badge_text(self) -> str:
         """Get badge text based on link status."""
+        targets = self.skill.installed_targets
+        if len(targets) == 2:
+            return "BOTH"
+        if targets == ["claude"]:
+            return "CLAUDE"
+        if targets == ["codex"]:
+            return "CODEX"
         status = self.skill.link_status
-        if status == LinkScope.GLOBAL:
-            return "GLOBAL"
-        elif status == LinkScope.PROJECT:
+        if status == LinkScope.PROJECT:
             return "PROJECT"
         return ""

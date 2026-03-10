@@ -24,16 +24,20 @@ class SymlinkManager:
     - Project: /path/to/project/.claude/agents/ and .claude/skills/
     """
 
-    def __init__(self, claude_dir: Path | None = None):
+    def __init__(self, claude_dir: Path | None = None, codex_dir: Path | None = None):
         """
         Initialize the symlink manager.
 
         Args:
             claude_dir: Override Claude directory (default: ~/.claude)
+            codex_dir: Override Codex directory (default: ~/.codex)
         """
         self.claude_dir = claude_dir or (Path.home() / ".claude")
+        self.codex_dir = codex_dir or (Path.home() / ".codex")
         self.global_agents_dir = self.claude_dir / "agents"
         self.global_skills_dir = self.claude_dir / "skills"
+        self.codex_agents_dir = self.codex_dir / "agents"
+        self.codex_skills_dir = self.codex_dir / "skills"
 
     # Agent operations
     def link_agent_global(self, source: Path) -> LinkResult:
@@ -61,6 +65,11 @@ class SymlinkManager:
             LinkResult indicating success or failure reason
         """
         target = project / ".claude" / "agents" / source.name
+        return self._create_symlink(source, target)
+
+    def link_agent_codex(self, source: Path) -> LinkResult:
+        """Create symlink for agent in ~/.codex/agents/."""
+        target = self.codex_agents_dir / source.name
         return self._create_symlink(source, target)
 
     def unlink_agent_global(self, agent_name: str) -> bool:
@@ -94,6 +103,13 @@ class SymlinkManager:
         target = project / ".claude" / "agents" / agent_name
         return self._remove_symlink(target)
 
+    def unlink_agent_codex(self, agent_name: str) -> bool:
+        """Remove Codex symlink for agent."""
+        if not agent_name.endswith(".md"):
+            agent_name = f"{agent_name}.md"
+        target = self.codex_agents_dir / agent_name
+        return self._remove_symlink(target)
+
     # Skill operations
     def link_skill_global(self, source_dir: Path) -> LinkResult:
         """
@@ -120,6 +136,11 @@ class SymlinkManager:
             LinkResult indicating success or failure reason
         """
         target = project / ".claude" / "skills" / source_dir.name
+        return self._create_symlink(source_dir, target)
+
+    def link_skill_codex(self, source_dir: Path) -> LinkResult:
+        """Create symlink for skill directory in ~/.codex/skills/."""
+        target = self.codex_skills_dir / source_dir.name
         return self._create_symlink(source_dir, target)
 
     def unlink_skill_global(self, skill_name: str) -> bool:
@@ -149,6 +170,11 @@ class SymlinkManager:
         target = project / ".claude" / "skills" / skill_name
         return self._remove_symlink(target)
 
+    def unlink_skill_codex(self, skill_name: str) -> bool:
+        """Remove Codex symlink for skill."""
+        target = self.codex_skills_dir / skill_name
+        return self._remove_symlink(target)
+
     # Status checking
     def get_agent_link_status(self, source: Path) -> dict:
         """
@@ -160,15 +186,24 @@ class SymlinkManager:
         Returns:
             Dict with global_linked, global_target, and project_links
         """
-        global_target = self.global_agents_dir / source.name
-        global_linked = (
-            global_target.is_symlink()
-            and global_target.resolve() == source.resolve()
+        claude_target = self.global_agents_dir / source.name
+        claude_linked = (
+            claude_target.is_symlink()
+            and claude_target.resolve() == source.resolve()
+        )
+        codex_target = self.codex_agents_dir / source.name
+        codex_linked = (
+            codex_target.is_symlink()
+            and codex_target.resolve() == source.resolve()
         )
 
         return {
-            "global_linked": global_linked,
-            "global_target": global_target if global_linked else None,
+            "global_linked": claude_linked or codex_linked,
+            "global_target": claude_target if claude_linked else (codex_target if codex_linked else None),
+            "claude_linked": claude_linked,
+            "claude_target": claude_target if claude_linked else None,
+            "codex_linked": codex_linked,
+            "codex_target": codex_target if codex_linked else None,
             "project_links": [],  # TODO: Track project links
         }
 
@@ -182,15 +217,24 @@ class SymlinkManager:
         Returns:
             Dict with global_linked, global_target, and project_links
         """
-        global_target = self.global_skills_dir / source_dir.name
-        global_linked = (
-            global_target.is_symlink()
-            and global_target.resolve() == source_dir.resolve()
+        claude_target = self.global_skills_dir / source_dir.name
+        claude_linked = (
+            claude_target.is_symlink()
+            and claude_target.resolve() == source_dir.resolve()
+        )
+        codex_target = self.codex_skills_dir / source_dir.name
+        codex_linked = (
+            codex_target.is_symlink()
+            and codex_target.resolve() == source_dir.resolve()
         )
 
         return {
-            "global_linked": global_linked,
-            "global_target": global_target if global_linked else None,
+            "global_linked": claude_linked or codex_linked,
+            "global_target": claude_target if claude_linked else (codex_target if codex_linked else None),
+            "claude_linked": claude_linked,
+            "claude_target": claude_target if claude_linked else None,
+            "codex_linked": codex_linked,
+            "codex_target": codex_target if codex_linked else None,
             "project_links": [],
         }
 

@@ -115,20 +115,28 @@ class PreviewPane(VerticalScroll):
 
     def _format_link_status(self, agent: Agent) -> str:
         """Format link status for display."""
-        status = agent.link_status.value.upper()
-        if agent.global_link:
-            return f"**Status:** 🟢 {status} (`~/.claude/agents/`)"
-        elif agent.project_links:
+        if agent.installed_targets:
+            targets = []
+            if agent.global_link:
+                targets.append("`~/.claude/agents/`")
+            if agent.codex_link:
+                targets.append("`~/.codex/agents/`")
+            return f"**Status:** 🟢 INSTALLED ({', '.join(targets)})"
+        if agent.project_links:
             projects = len(agent.project_links)
-            return f"**Status:** 🟡 {status} ({projects} project{'s' if projects > 1 else ''})"
+            return f"**Status:** 🟡 PROJECT ({projects} project{'s' if projects > 1 else ''})"
         return "**Status:** ⚪ UNLINKED"
 
     def _format_skill_link_status(self, skill: Skill) -> str:
         """Format link status for display."""
-        status = skill.link_status.value.upper()
-        if skill.global_link:
-            return f"**Status:** 🟢 {status} (`~/.claude/skills/`)"
-        elif skill.project_links:
+        if skill.installed_targets:
+            targets = []
+            if skill.global_link:
+                targets.append("`~/.claude/skills/`")
+            if skill.codex_link:
+                targets.append("`~/.codex/skills/`")
+            return f"**Status:** 🟢 INSTALLED ({', '.join(targets)})"
+        if skill.project_links:
             projects = len(skill.project_links)
-            return f"**Status:** 🟡 {status} ({projects} project{'s' if projects > 1 else ''})"
+            return f"**Status:** 🟡 PROJECT ({projects} project{'s' if projects > 1 else ''})"
         return "**Status:** ⚪ UNLINKED"

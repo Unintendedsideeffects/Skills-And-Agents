@@ -22,14 +22,16 @@ def temp_dirs():
         # Create Claude dir
         claude_dir = base / ".claude"
         claude_dir.mkdir()
+        codex_dir = base / ".codex"
+        codex_dir.mkdir()
 
-        yield agent_file, claude_dir
+        yield agent_file, claude_dir, codex_dir
 
 
 def test_link_agent_global_success(temp_dirs):
     """Test successful global linking."""
-    agent_file, claude_dir = temp_dirs
-    manager = SymlinkManager(claude_dir=claude_dir)
+    agent_file, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
 
     result = manager.link_agent_global(agent_file)
     assert result == LinkResult.SUCCESS
@@ -42,8 +44,8 @@ def test_link_agent_global_success(temp_dirs):
 
 def test_link_agent_global_already_linked(temp_dirs):
     """Test linking already linked agent."""
-    agent_file, claude_dir = temp_dirs
-    manager = SymlinkManager(claude_dir=claude_dir)
+    agent_file, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
 
     # Link once
     result1 = manager.link_agent_global(agent_file)
@@ -56,8 +58,8 @@ def test_link_agent_global_already_linked(temp_dirs):
 
 def test_link_agent_global_missing_source(temp_dirs):
     """Test linking with missing source."""
-    _, claude_dir = temp_dirs
-    manager = SymlinkManager(claude_dir=claude_dir)
+    _, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
 
     nonexistent = Path("/nonexistent/agent.md")
     result = manager.link_agent_global(nonexistent)
@@ -66,8 +68,8 @@ def test_link_agent_global_missing_source(temp_dirs):
 
 def test_unlink_agent(temp_dirs):
     """Test unlinking an agent."""
-    agent_file, claude_dir = temp_dirs
-    manager = SymlinkManager(claude_dir=claude_dir)
+    agent_file, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
 
     # Link first
     manager.link_agent_global(agent_file)
@@ -82,8 +84,8 @@ def test_unlink_agent(temp_dirs):
 
 def test_unlink_nonexistent(temp_dirs):
     """Test unlinking that doesn't exist."""
-    _, claude_dir = temp_dirs
-    manager = SymlinkManager(claude_dir=claude_dir)
+    _, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
 
     success = manager.unlink_agent_global("nonexistent.md")
     assert not success
@@ -91,8 +93,8 @@ def test_unlink_nonexistent(temp_dirs):
 
 def test_get_agent_link_status(temp_dirs):
     """Test checking link status."""
-    agent_file, claude_dir = temp_dirs
-    manager = SymlinkManager(claude_dir=claude_dir)
+    agent_file, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
 
     # Before linking
     status = manager.get_agent_link_status(agent_file)
@@ -102,3 +104,28 @@ def test_get_agent_link_status(temp_dirs):
     manager.link_agent_global(agent_file)
     status = manager.get_agent_link_status(agent_file)
     assert status["global_linked"]
+
+
+def test_link_agent_codex_success(temp_dirs):
+    """Test successful Codex agent linking."""
+    agent_file, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
+
+    result = manager.link_agent_codex(agent_file)
+    assert result == LinkResult.SUCCESS
+
+    target = codex_dir / "agents" / agent_file.name
+    assert target.is_symlink()
+    assert target.resolve() == agent_file.resolve()
+
+
+def test_get_agent_link_status_codex(temp_dirs):
+    """Test status reporting for Codex install."""
+    agent_file, claude_dir, codex_dir = temp_dirs
+    manager = SymlinkManager(claude_dir=claude_dir, codex_dir=codex_dir)
+
+    manager.link_agent_codex(agent_file)
+    status = manager.get_agent_link_status(agent_file)
+    assert status["global_linked"]
+    assert status["codex_linked"]
+    assert status["codex_target"] == codex_dir / "agents" / agent_file.name

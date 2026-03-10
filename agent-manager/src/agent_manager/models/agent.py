@@ -37,6 +37,7 @@ class Agent:
     source_path: Path
     source_repo: Path
     global_link: Optional[Path] = None
+    codex_link: Optional[Path] = None
     project_links: list[Path] = field(default_factory=list)
 
     @property
@@ -47,11 +48,24 @@ class Agent:
     @property
     def link_status(self) -> LinkScope:
         """Get current link status."""
-        if self.global_link and self.global_link.exists():
+        if (
+            (self.global_link and self.global_link.exists())
+            or (self.codex_link and self.codex_link.exists())
+        ):
             return LinkScope.GLOBAL
         elif self.project_links:
             return LinkScope.PROJECT
         return LinkScope.UNLINKED
+
+    @property
+    def installed_targets(self) -> list[str]:
+        """Get installed global targets."""
+        targets: list[str] = []
+        if self.global_link and self.global_link.exists():
+            targets.append("claude")
+        if self.codex_link and self.codex_link.exists():
+            targets.append("codex")
+        return targets
 
     @property
     def display_name(self) -> str:
@@ -72,4 +86,5 @@ class Agent:
             "source_path": str(self.source_path),
             "source_repo": str(self.source_repo),
             "link_status": self.link_status.value,
+            "installed_targets": self.installed_targets,
         }

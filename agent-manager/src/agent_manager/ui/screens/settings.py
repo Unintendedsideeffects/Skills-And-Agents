@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Input, Button, ListView, ListItem
 from textual.containers import Horizontal, Vertical
@@ -29,10 +30,12 @@ class SettingsScreen(Screen):
     """Settings and configuration screen."""
 
     BINDINGS = [
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
-        ("x", "remove_path", "Remove"),
-        ("t", "toggle_path", "Toggle"),
+        Binding("j", "cursor_down", "Down"),
+        Binding("down", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up"),
+        Binding("up", "cursor_up", "Up", show=False),
+        Binding("x", "remove_path", "Remove"),
+        Binding("t", "toggle_path", "Toggle"),
     ]
 
     def __init__(self, **kwargs) -> None:
@@ -81,6 +84,7 @@ class SettingsScreen(Screen):
         """Called when screen is mounted."""
         self.app.sub_title = "Settings"
         self._rebuild_paths_list()
+        self.query_one("#paths-list", ListView).focus()
 
     def _rebuild_paths_list(self) -> None:
         """Rebuild the paths list from config."""

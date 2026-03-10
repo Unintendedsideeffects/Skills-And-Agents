@@ -1,8 +1,9 @@
 """Skills screen for listing and managing skills."""
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Input, ListView
+from textual.widgets import Header, Footer, Input, ListView, Button
 from textual.containers import Horizontal, Vertical
 
 from agent_manager.models import Skill
@@ -14,11 +15,13 @@ class SkillsScreen(Screen):
     """List and manage skills."""
 
     BINDINGS = [
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
-        ("g", "link_global", "Link Global"),
-        ("u", "unlink", "Unlink"),
-        ("slash", "focus_search", "Search"),
+        Binding("j", "cursor_down", "Down"),
+        Binding("down", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up"),
+        Binding("up", "cursor_up", "Up", show=False),
+        Binding("g", "link_global", "Link Global"),
+        Binding("u", "unlink", "Unlink"),
+        Binding("slash", "focus_search", "Search"),
     ]
 
     def __init__(self, **kwargs) -> None:
@@ -34,8 +37,19 @@ class SkillsScreen(Screen):
         with Horizontal(id="main-content"):
             with Vertical(id="list-container"):
                 yield ListView(id="skill-list")
+                with Horizontal(classes="pane-actions pane-actions-left"):
+                    yield Button("Install All On Both", id="bulk-install-all-skill-btn")
+                    yield Button("Install All On Codex", id="bulk-install-codex-skill-btn")
+                    yield Button("Install All On Claude Code", id="bulk-install-claude-skill-btn")
 
-            yield PreviewPane(id="preview-pane")
+            with Vertical(id="preview-column"):
+                yield PreviewPane(id="preview-pane")
+                with Horizontal(classes="pane-actions pane-actions-right"):
+                    yield Static("", classes="action-spacer")
+                    yield Button("Install On Both", id="install-all-skill-btn")
+                    yield Button("Install On Codex", id="install-codex-skill-btn")
+                    yield Button("Install On Claude Code", id="install-claude-skill-btn")
+                    yield Button("Remove", id="remove-skill-btn", variant="error")
 
         yield Footer()
 
@@ -136,44 +150,128 @@ class SkillsScreen(Screen):
             event.stop()
 
     def action_link_global(self) -> None:
-        """Link the selected skill globally."""
+        """Install the selected skill to Claude Code."""
+        self._install_selected_skill("claude")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle install/remove buttons."""
+        button_id = event.button.id
+        if button_id == "bulk-install-all-skill-btn":
+            self._install_all_skills("all")
+        elif button_id == "bulk-install-codex-skill-btn":
+            self._install_all_skills("codex")
+        elif button_id == "bulk-install-claude-skill-btn":
+            self._install_all_skills("claude")
+        elif button_id == "install-all-skill-btn":
+            self._install_selected_skill("all")
+        elif button_id == "install-codex-skill-btn":
+            self._install_selected_skill("codex")
+        elif button_id == "install-claude-skill-btn":
+            self._install_selected_skill("claude")
+        elif button_id == "remove-skill-btn":
+            self.action_unlink()
+
+    def _install_selected_skill(self, target: str) -> None:
+        """Install the selected skill to one or more targets."""
         if not self._selected_skill:
             self.notify("No skill selected", severity="warning")
             return
 
-        result = self.app.symlink_manager.link_skill_global(
-            self._selected_skill.source_dir
-        )
+        targets = ["claude", "codex"] if target == "all" else [target]
+        outcomes: list[str] = []
 
-        if result.value == "success":
-            self._selected_skill.global_link = (
-                self.app.symlink_manager.global_skills_dir
-                / self._selected_skill.source_dir.name
-            )
-            self.notify(f"Linked {self._selected_skill.metadata.name} globally")
-            self._rebuild_list()
-        elif result.value == "already_exists":
-            self.notify("Already linked globally", severity="information")
-        elif result.value == "conflict":
-            self.notify("Conflict: different skill exists at target", severity="error")
+        for current_target in targets:
+            if current_target == "claude":
+                result = self.app.symlink_manager.link_skill_global(
+                    self._selected_skill.source_dir
+                )
+                if result.value in {"success", "already_exists"}:
+                    self._selected_skill.global_link = (
+                        self.app.symlink_manager.global_skills_dir
+                        / self._selected_skill.source_dir.name
+                    )
+            else:
+                result = self.app.symlink_manager.link_skill_codex(
+                    self._selected_skill.source_dir
+                )
+                if result.value in {"success", "already_exists"}:
+                    self._selected_skill.codex_link = (
+                        self.app.symlink_manager.codex_skills_dir
+                        / self._selected_skill.source_dir.name
+                    )
+            outcomes.append(f"{current_target}:{result.value}")
+
+        self._refresh_selected_skill_view()
+        self.notify(f"{self._selected_skill.metadata.name}: {', '.join(outcomes)}")
+
+    def _install_all_skills(self, target: str) -> None:
+        """Install all discovered skills to one or more targets."""
+        skills = self.app.skills
+        if not skills:
+            self.notify("No skills available", severity="warning")
+            return
+
+        targets = ["claude", "codex"] if target == "all" else [target]
+        successes = 0
+        conflicts = 0
+
+        for skill in skills:
+            for current_target in targets:
+                if current_target == "claude":
+                    result = self.app.symlink_manager.link_skill_global(skill.source_dir)
+                    if result.value in {"success", "already_exists"}:
+                        skill.global_link = (
+                            self.app.symlink_manager.global_skills_dir / skill.source_dir.name
+                        )
+                        successes += 1
+                    elif result.value == "conflict":
+                        conflicts += 1
+                else:
+                    result = self.app.symlink_manager.link_skill_codex(skill.source_dir)
+                    if result.value in {"success", "already_exists"}:
+                        skill.codex_link = (
+                            self.app.symlink_manager.codex_skills_dir / skill.source_dir.name
+                        )
+                        successes += 1
+                    elif result.value == "conflict":
+                        conflicts += 1
+
+        self._refresh_selected_skill_view()
+        summary = f"Installed {len(skills)} skill(s)"
+        if len(targets) > 1:
+            summary += " on Claude Code and Codex"
         else:
-            self.notify(f"Failed to link: {result.value}", severity="error")
+            summary += f" on {targets[0]}"
+        summary += f" ({successes} link operations"
+        if conflicts:
+            summary += f", {conflicts} conflicts"
+        summary += ")"
+        self.notify(summary)
 
     def action_unlink(self) -> None:
-        """Unlink the selected skill."""
+        """Remove the selected skill from Claude Code and Codex."""
         if not self._selected_skill:
             self.notify("No skill selected", severity="warning")
             return
 
-        if self._selected_skill.global_link:
-            success = self.app.symlink_manager.unlink_skill_global(
-                self._selected_skill.source_dir.name
-            )
-            if success:
-                self._selected_skill.global_link = None
-                self.notify(f"Unlinked {self._selected_skill.metadata.name}")
-                self._rebuild_list()
-            else:
-                self.notify("Failed to unlink", severity="error")
+        removed_claude = self.app.symlink_manager.unlink_skill_global(
+            self._selected_skill.source_dir.name
+        )
+        removed_codex = self.app.symlink_manager.unlink_skill_codex(
+            self._selected_skill.source_dir.name
+        )
+
+        if removed_claude or removed_codex:
+            self._selected_skill.global_link = None
+            self._selected_skill.codex_link = None
+            self._refresh_selected_skill_view()
+            self.notify(f"Removed {self._selected_skill.metadata.name}")
         else:
-            self.notify("Skill is not linked", severity="information")
+            self.notify("Skill is not installed", severity="information")
+
+    def _refresh_selected_skill_view(self) -> None:
+        """Refresh list and preview after skill changes."""
+        self._rebuild_list()
+        if self._selected_skill:
+            preview = self.query_one("#preview-pane", PreviewPane)
+            preview.show_skill(self._selected_skill)
