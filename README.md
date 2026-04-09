@@ -198,6 +198,16 @@ A syntax-aware code transformation specialist. Always prefers AST-based operatio
 
 ## Available Skills
 
+### 📝 Obsidian CLI
+**File:** `skills/obsidian-cli/SKILL.md`
+**Use When:** You need to operate a live Obsidian vault through the official `obsidian` CLI instead of editing markdown files blindly on disk
+
+A vault-operations skill for reading and writing notes, daily-note workflows, vault search, tasks, tags, link analysis, plugin management, sync inspection, and other actions performed against a running Obsidian desktop instance.
+
+**Best For:** Obsidian note CRUD, daily notes, vault search, backlinks, task toggles, plugin installs, sync/history checks
+
+---
+
 ### 🔍 GitHub Request Copilot Review
 **File:** `skills/gh-request-copilot-review/SKILL.md`
 **Use When:** You need to request or re-request GitHub Copilot review on the PR for the current branch and confirm GitHub recorded the request
@@ -255,6 +265,7 @@ Fork this repo and add your own specialized agents for your domain.
 │   └── sre-code-reviewer.md
 ├── skills/                    # Reusable skill directories
 │   ├── claude-diff-review/
+│   ├── obsidian-cli/
 │   ├── gemini/
 │   ├── gh-request-copilot-review/
 │   └── scrum-master/

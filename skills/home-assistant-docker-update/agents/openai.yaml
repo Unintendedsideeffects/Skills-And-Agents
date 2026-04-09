@@ -1,0 +1,7 @@
+interface:
+  display_name: "HA Docker Update"
+  short_description: "Upgrade Docker-based HA safely"
+  default_prompt: "Use $home-assistant-docker-update to discover the active Home Assistant Docker deployment, persist the runtime facts, and upgrade it safely."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scrum Master"
+  short_description: "Turn plans into weighted atomic backlogs and agent prompts."
+  default_prompt: "Convert this execution plan into atomic tasks with weights, dependencies, and prompts per agent."

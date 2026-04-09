@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/scrum-master/backlog-schema.json",
+  "title": "Scrum Backlog Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "source_type",
+    "goal",
+    "totals",
+    "tasks",
+    "dependency_tree",
+    "agent_packets",
+    "open_questions"
+  ],
+  "properties": {
+    "type": {
+      "const": "scrum_backlog"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "planner_handoff",
+        "raw_plan"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_count",
+        "milestone_count",
+        "agent_count",
+        "total_weight"
+      ],
+      "properties": {
+        "task_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "milestone_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "agent_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total_weight": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "task_id",
+          "milestone",
+          "source_step_id",
+          "title",
+          "action",
+          "weight",
+          "dependencies",
+          "inputs",
+          "outputs",
+          "risks",
+          "acceptance_criteria",
+          "assigned_agent",
+          "prompt"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "milestone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_step_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 13
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assigned_agent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "dependency_tree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roots",
+        "edges",
+        "mermaid"
+      ],
+      "properties": {
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "mermaid": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "agent_packets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "task_id",
+            "weight",
+            "dependencies",
+            "milestone",
+            "title",
+            "prompt"
+          ],
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "weight": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 13
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "milestone": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
