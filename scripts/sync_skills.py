@@ -10,11 +10,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
-DEFAULT_TARGETS = ("claude", "codex", "gemini")
+DEFAULT_TARGETS = ("claude", "codex")
 TARGET_DIRS = {
     "claude": ".claude/skills",
     "codex": ".codex/skills",
-    "gemini": ".gemini/skills",
 }
 SKIP_NAMES = {"__pycache__", ".DS_Store"}
 SKIP_SUFFIXES = {".pyc", ".pyo"}
@@ -203,8 +202,21 @@ def main() -> int:
         print(f"No skills found in {skills_root}", file=sys.stderr)
         return 1
 
+    # ~/.claude/skills is commonly a symlink to ~/.codex/skills, in which case two
+    # target names resolve to one directory. Sync it once and say so, rather than
+    # walking the same tree twice.
+    seen_roots: dict[Path, str] = {}
+
     for target_name in targets:
         target_root = args.home / TARGET_DIRS[target_name]
+        resolved = target_root.resolve()
+        if resolved in seen_roots:
+            print(
+                f"[skip] {target_name}: {target_root} resolves to the same directory "
+                f"as '{seen_roots[resolved]}' ({resolved}) — already synced"
+            )
+            continue
+        seen_roots[resolved] = target_name
         total = SyncStats()
         print(f"[sync] {target_name}: {target_root}")
         if not args.dry_run:

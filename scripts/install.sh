@@ -5,7 +5,9 @@ set -e
 # Symlinks agent configurations to ~/.claude/agents/
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_SOURCE="$SCRIPT_DIR/../agents"
+# Normalized (no "scripts/../agents"), so the symlink targets this script creates
+# compare equal to the paths `status` reads back with readlink.
+AGENTS_SOURCE="$(cd "$SCRIPT_DIR/../agents" && pwd)"
 CLAUDE_AGENTS_DIR="$HOME/.claude/agents"
 
 # Colors for output

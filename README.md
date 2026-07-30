@@ -72,9 +72,14 @@ pre-commit install
 That hook runs `scripts/sync_skills.py` and syncs the canonical `skills/` tree into:
 - `~/.claude/skills/`
 - `~/.codex/skills/`
-- `~/.gemini/skills/`
+
+On this setup `~/.claude/skills` is a symlink to `~/.codex/skills`, so both targets
+resolve to one directory and the sync walks it once (it reports the second as skipped).
+Gemini is no longer a target.
 
 It updates same-named skills in place and leaves unrelated extra local skills alone.
+Within a skill it *is* authoritative: files in the installed copy that no longer exist
+in `skills/` are deleted. Edit `skills/` — never the installed copy.
 
 ### Using Agents in Your CLI Tool
 
