@@ -80,7 +80,13 @@ def _objects(path):
 
 
 def _tokens(**kw):
-    return {k: int(kw.get(k) or 0) for k in TOKENS}
+    out = {k: int(kw.get(k) or 0) for k in TOKENS}
+    bad = [k for k, v in out.items() if v < 0]
+    if bad:
+        # A negative count means a reader's assumption about what a CLI's input
+        # figure includes is wrong; refuse rather than record nonsense.
+        raise UsageError("negative token count for %s: %s" % (", ".join(bad), out))
+    return out
 
 
 def _add(a, b):
@@ -126,9 +132,10 @@ def read_agy(path):
         raise UsageError("no agy usage object (use --output-format json)")
     u = objs[-1]["usage"]
     return {"session": objs[-1].get("session_id") or objs[-1].get("conversation_id"),
-            "tokens": _tokens(input=int(u.get("input_tokens") or 0) - int(u.get("cache_read_tokens") or 0),
-                              cache_read=u.get("cache_read_tokens"), output=u.get("output_tokens"),
-                              reasoning=u.get("thinking_tokens")),
+            # input_tokens excludes cache reads: total_tokens == input + output
+            # (verified on a claude-opus run via agy, 2026-11-05).
+            "tokens": _tokens(input=u.get("input_tokens"), cache_read=u.get("cache_read_tokens"),
+                              output=u.get("output_tokens"), reasoning=u.get("thinking_tokens")),
             "seconds": objs[-1].get("duration_seconds")}
 
 
