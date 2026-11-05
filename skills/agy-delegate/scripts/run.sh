@@ -65,6 +65,15 @@ CMD=(agy --dangerously-skip-permissions --print-timeout "$TIMEOUT")
 [ -n "$MODEL" ] && CMD+=(--model "$MODEL")
 [ -n "$ADD_DIR" ] && CMD+=(--add-dir "$ADD_DIR")
 CMD+=(--print "$PROMPT")
+# Usage tracking (agent-usage skill): agy writes its result as JSON next to the
+# log, the log gets the reply as text, and the run's tokens go to the shared
+# ledger. AGENT_USAGE=0 restores plain text output.
+AGENT_USAGE_PY="${AGENT_USAGE_PY:-$HOME/.claude/skills/agent-usage/scripts/agent_usage.py}"
+TRACK=0
+if [ "${AGENT_USAGE:-1}" != 0 ] && [ -f "$AGENT_USAGE_PY" ]; then
+  TRACK=1
+  CMD+=(--output-format json)
+fi
 
 if [ -n "$CWD" ]; then
   cd "$CWD"
@@ -74,7 +83,18 @@ echo "agy-delegate: dispatching against ${BRIEF}" >&2
 echo "agy-delegate: model=${MODEL:-default(Flash)} timeout=${TIMEOUT} log=${LOG}" >&2
 
 # Foreground on purpose — the caller backgrounds this via the harness.
-"${CMD[@]}" >"$LOG" 2>&1
-status=$?
+set +e
+if [ "$TRACK" = 1 ]; then
+  "${CMD[@]}" >"$LOG.json" 2>"$LOG"
+  status=$?
+  python3 "$AGENT_USAGE_PY" answer agy "$LOG.json" >>"$LOG" 2>/dev/null \
+    || echo "agy-delegate: no final reply in $LOG.json (run died early? see the log above)" >>"$LOG"
+  python3 "$AGENT_USAGE_PY" record agy "$LOG.json" --label "agy:$(basename "$BRIEF")" >&2 \
+    || echo "agy-delegate: usage not recorded" >&2
+else
+  "${CMD[@]}" >"$LOG" 2>&1
+  status=$?
+fi
+set -e
 echo "agy-delegate: agy exited status=${status} (NOT a success verdict — verify the diff)" | tee -a "$LOG" >&2
 exit "$status"

@@ -107,6 +107,34 @@ if [[ ${#extra_args[@]} -gt 0 ]]; then
     cmd+=("${extra_args[@]}")
 fi
 
+# Usage tracking (agent-usage skill): Copilot's JSONL stream goes next to the
+# log, the reply is printed as text as before (-s output), and the run's
+# premium requests and tokens go to the shared ledger. AGENT_USAGE=0 disables it.
+AGENT_USAGE_PY="${AGENT_USAGE_PY:-$HOME/.claude/skills/agent-usage/scripts/agent_usage.py}"
+if [[ "${AGENT_USAGE:-1}" != 0 && -f "$AGENT_USAGE_PY" ]]; then
+    for i in "${!cmd[@]}"; do [[ "${cmd[$i]}" == "-s" ]] && unset 'cmd[$i]'; done
+    cmd=("${cmd[@]}" --output-format json)
+    if [[ -n "$log_path" ]]; then
+        mkdir -p "$(dirname "$log_path")"
+        json_path="${log_path}.jsonl"
+    else
+        json_path="$(mktemp "${TMPDIR:-/tmp}/copilot-run-XXXXXX.jsonl")"
+    fi
+    set +e
+    "${cmd[@]}" >"$json_path"
+    status=$?
+    set -e
+    reply="$(python3 "$AGENT_USAGE_PY" answer copilot "$json_path" 2>/dev/null || echo "(no final reply in $json_path)")"
+    if [[ -n "$log_path" ]]; then
+        printf '%s\n' "$reply" | tee "$log_path"
+    else
+        printf '%s\n' "$reply"
+    fi
+    python3 "$AGENT_USAGE_PY" record copilot "$json_path" --label "copilot:$(basename "${prompt_file:-inline}")" >&2 \
+        || echo "copilot-delegate: usage not recorded" >&2
+    exit "$status"
+fi
+
 if [[ -n "$log_path" ]]; then
     mkdir -p "$(dirname "$log_path")"
     "${cmd[@]}" 2>&1 | tee "$log_path"

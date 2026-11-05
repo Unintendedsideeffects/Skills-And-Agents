@@ -37,4 +37,27 @@ if [[ -n "$MODEL" ]]; then
   CMD+=(--model "$MODEL")
 fi
 
-exec "${CMD[@]}"
+# Usage tracking (agent-usage skill): run with JSON output into a temp file,
+# print the reply as text as before, and record the run's tokens in the shared
+# ledger. AGENT_USAGE=0 (or no tracker installed) keeps the plain call.
+AGENT_USAGE_PY="${AGENT_USAGE_PY:-$HOME/.claude/skills/agent-usage/scripts/agent_usage.py}"
+tracked_run() {  # tracked_run <agent> <label> <json-flag...> -- <command...>
+  local agent="$1" label="$2" flags=() json status
+  shift 2
+  while [[ "$1" != "--" ]]; do flags+=("$1"); shift; done
+  shift
+  if [[ "${AGENT_USAGE:-1}" == 0 || ! -f "$AGENT_USAGE_PY" ]]; then
+    "$@"
+    return
+  fi
+  json="$(mktemp "${TMPDIR:-/tmp}/${agent}-run-XXXXXX.json")"
+  set +e
+  "$@" "${flags[@]}" >"$json"
+  status=$?
+  set -e
+  python3 "$AGENT_USAGE_PY" answer "$agent" "$json" 2>/dev/null || cat "$json"
+  python3 "$AGENT_USAGE_PY" record "$agent" "$json" --label "$label" >&2 || echo "usage not recorded ($json)" >&2
+  return "$status"
+}
+
+tracked_run gemini "gemini:run" -o json -- "${CMD[@]}"

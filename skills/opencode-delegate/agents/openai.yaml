@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenCode Delegate"
+  short_description: "Delegate bounded work to the OpenCode CLI"
+  default_prompt: "Use $opencode-delegate to dispatch this bounded task through OpenCode and verify the result."
