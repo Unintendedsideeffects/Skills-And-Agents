@@ -5,16 +5,23 @@ description: Use when the user asks to run Codex CLI (codex exec, codex resume) 
 
 # Codex Skill Guide
 
-Verified against codex-cli 0.164.0 (2026-11). Re-check `/usr/bin/codex --version`
-and `/usr/bin/codex exec --help` if a flag below is rejected.
+Verified against codex-cli 0.164.0 (2026-11). Re-check `$CODEX --version`
+and `$CODEX exec --help` if a flag below is rejected.
 
 ## Which binary
 
-Always call **`/usr/bin/codex`** by full path:
-- `codex` in zsh is an alias that opens a tmux session; it fails without a TTY.
-- `~/.local/bin/codex` is the user's wrapper and **always adds
-  `--dangerously-bypass-approvals-and-sandbox`**, so any `-s ...` you pass is
-  silently ignored. Use it only when the user wants no sandbox.
+Call Codex by its **file path**, never the bare name: `CODEX=$(type -P codex)`.
+The path differs per machine (`/usr/bin/codex`, `/usr/local/bin/codex`, ...); `type -P`
+skips shell functions and aliases.
+- In interactive shells `codex` is a function from `scripts/agent-tmux.sh` that opens a
+  tmux session (it falls through to the real binary without a terminal, but don't
+  rely on it).
+- A `~/.local/bin/codex` wrapper, where present, **always adds
+  `--dangerously-bypass-approvals-and-sandbox`**, so any `-s ...` you pass is silently
+  ignored. If `type -P codex` resolves to it, pick the real binary from `type -aP codex`
+  unless the user wants no sandbox.
+
+Examples below write `/usr/bin/codex`; substitute your `$CODEX`.
 
 ## Running a Task
 1. Ask the user (via `AskUserQuestion`) which model AND which reasoning effort, in a
