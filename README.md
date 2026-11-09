@@ -81,6 +81,22 @@ It updates same-named skills in place and leaves unrelated extra local skills al
 Within a skill it *is* authoritative: files in the installed copy that no longer exist
 in `skills/` are deleted. Edit `skills/` — never the installed copy.
 
+### Agent CLIs in tmux (`scripts/agent-tmux.sh`)
+
+Interactive `claude`, `codex`, `agy` (and `gemini` -> agy) start in their own tmux
+session named `agent-<name>-<YYYYmmdd-HHMMSS>`, so a dropped SSH never kills an agent.
+Inside tmux already, they run in place (no nesting). `agents` lists the sessions,
+`agents <name>` attaches; detach with `Ctrl-b d`. Source it from any shell rc:
+
+```bash
+[ -f ~/Code/Environment/Skills-And-Agents/scripts/agent-tmux.sh ] && \
+  . ~/Code/Environment/Skills-And-Agents/scripts/agent-tmux.sh
+```
+
+Only interactive shells load it. Scripted runs (`codex exec`, `agy --print`) are
+unaffected; for those, close stdin and use `systemd-run` when they must outlive the
+terminal (see the codex and agy-delegate skills).
+
 ### Using Agents in Your CLI Tool
 
 ```python

@@ -32,7 +32,14 @@ Always call **`/usr/bin/codex`** by full path:
    - `-s danger-full-access`: network/broad access; ask the user first.
    There is **no `--full-auto`** any more ("unexpected argument");
    `codex exec` with `-s` already runs non-interactively.
-3. Put the task in a brief file and feed it on stdin; always pass `--json` and write stdout
+3. **Never leave Codex's stdin open.** If you pass the prompt as an argument instead
+   of on stdin, add `< /dev/null`: `codex exec` otherwise prints `Reading additional
+   input from stdin...` and waits forever with no error (1.5 h lost, 2026-11-09, in a
+   harness background task). Feeding the brief on stdin, as below, avoids it.
+   For runs that must survive the terminal/SSH dropping, launch with `systemd-run`
+   (same recipe as the agy-delegate skill; set `HOME`). Interactive `codex` is
+   tmux-wrapped by `scripts/agent-tmux.sh`.
+4. Put the task in a brief file and feed it on stdin; always pass `--json` and write stdout
    and stderr to files, then record the run's usage:
    ```bash
    /usr/bin/codex exec --skip-git-repo-check --json -m gpt-6-astra \
@@ -55,9 +62,9 @@ Always call **`/usr/bin/codex`** by full path:
      **`session id:`** (needed to resume) and confirms model/sandbox/effort; the
      rest is progress you only read when debugging.
    - Long runs: start in the background and wait for completion; do not poll.
-4. Keep work copies and briefs outside session scratchpads (they get wiped): e.g. a
+5. Keep work copies and briefs outside session scratchpads (they get wiped): e.g. a
    git worktree under the project's agents dir, briefs next to it.
-5. When Codex finishes, review its diff yourself (it is a colleague, not the gate),
+6. When Codex finishes, review its diff yourself (it is a colleague, not the gate),
    run the real gates unsandboxed, then tell the user they can resume the session.
 
 ### Resuming

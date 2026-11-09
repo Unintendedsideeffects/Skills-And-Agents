@@ -10,7 +10,7 @@ Your job is supervisor, not typist: write (or point at) a self-contained brief,
 dispatch agy, then **verify the diff and run the gates yourself**. agy's exit code
 is not a verdict; the diff is.
 
-Default model is **Gemini 3.5 Flash (Medium)**. Flash is excellent at mechanical,
+Default model is **Gemini Flash (Medium)** (`agy models` for the current version; 3.8 as of 2026-11). Flash is excellent at mechanical,
 well-specified work and weak at numeric/spatial reasoning and recovering from
 ambiguity. The more precise the brief, the better Flash does — so the brief is the
 product, the same way it is for a handoff plan.
@@ -59,15 +59,37 @@ echo "=== agy exited ==="; tail -25 /tmp/agy-001.log    # + your gate checks her
 
 - `--print "<prompt>"` (alias `-p`/`--prompt`): non-interactive single run.
 - `--dangerously-skip-permissions`: auto-approve agy's tool calls. Required for
-  unattended runs (otherwise it blocks on its first edit).
+  unattended runs. **Without it, headless agy no longer blocks: it exits 0 having done
+  nothing**, with the log ending `jetski: no output produced — a tool required the
+  "command" permission that headless mode cannot prompt for, so it was auto-denied`.
+  An exit 0 + that line = permission problem, not a finished run (seen 2026-11-09).
 - `--print-timeout 50m`: agy **burns wall-clock polling its own builds** ("I will
   continue waiting" ×10). The default 5m is far too short for any build-verified run.
   Give 50m+. On timeout agy is killed by signal → **exit 144** (this is a timeout,
   NOT a rate limit; rate limits print an error and exit cleanly on their own).
-- `--model <tier>`: override per dispatch. `agy models` lists them. Menu includes
-  Gemini 3.1 Pro (Low/High), Claude Sonnet/Opus (Thinking), GPT-OSS 120B.
+- `--model <tier>`: override per dispatch. `agy models` lists them. As of 2026-11:
+  `gemini-3.8-flash-{low,medium,high}`, `gemini-4-argon-{low,medium,high}`, Claude
+  Opus/Sonnet 5.5 (low/medium/high), `gpt-oss-120b-medium`. Re-list: names change.
 - `--add-dir <dir>`: add a directory to agy's workspace (use when running against a
   worktree whose path differs from cwd).
+
+### Close stdin, and survive the terminal going away
+
+- Always launch with `< /dev/null`. An agent CLI with an open stdin can sit forever
+  waiting for input (Codex did, for 1.5 h, 2026-11-09). `scripts/run.sh` does this.
+- A harness background task dies with the Claude Code session: if the SSH/terminal
+  may drop, run agy as its own systemd unit instead. systemd gives it no `$HOME`, and
+  agy refuses to start without one (`Failed to start: $HOME is not defined`):
+  ```bash
+  sudo systemd-run --unit=agy-<task> --collect --setenv=HOME=/root \
+    --property=StandardInput=null \
+    --property=StandardOutput=append:/abs/agy.log --property=StandardError=append:/abs/agy.log \
+    /bin/bash -lc 'cd /root && agy --dangerously-skip-permissions --model <tier> \
+      --new-project --add-dir /abs/workdir --print "<instruction pointing at the brief>"'
+  systemctl is-active agy-<task>      # poll this, or wait on it with a tracked loop
+  ```
+  Interactive `agy`/`claude`/`codex` are tmux-wrapped by `scripts/agent-tmux.sh` in
+  this repo; that protects interactive sessions, not scripted runs.
 
 ### Point agy at the brief on disk
 
@@ -86,9 +108,15 @@ a 0-byte log as a hang for Pro; watch the deliverable file instead.
 
 | Tier | Use for |
 |---|---|
-| Gemini 3.5 Flash (default) | Mechanical, fully-specified edits; adding tests; rote refactors |
-| Gemini 3.1 Pro (High) | Geometry/layout arithmetic, concurrency/lock reasoning, architecture, linker-cone debugging |
+| Gemini Flash (default) | Mechanical, fully-specified edits; adding tests; rote refactors |
+| Gemini Flash (High) | Mid-size data/analysis jobs with a precise brief: pull data from an API, fit a standard model (e.g. a ridge regression over a few thousand rows), write a report. Cheaper and faster than Codex; spares Codex's weekly limit |
+| Gemini Argon (High) | Geometry/layout arithmetic, concurrency/lock reasoning, architecture, linker-cone debugging |
 | Claude / GPT-OSS | When you want a different reasoning style for a cross-check |
+
+Before briefing a data job, spend two minutes checking the input coverage yourself
+(rows per series, gaps, units). A wrong data-hygiene rule in the brief is followed
+exactly by any model: 2026-11-09 a "drop hours with any missing series" rule left 23
+of 1,297 hours and a useless fit; a cheap coverage table would have caught it first.
 
 Match tier to where the *correction cycles* will come from. Flash that needs three
 rounds of geometry fixes is more expensive than one Pro run.

@@ -83,16 +83,17 @@ echo "agy-delegate: dispatching against ${BRIEF}" >&2
 echo "agy-delegate: model=${MODEL:-default(Flash)} timeout=${TIMEOUT} log=${LOG}" >&2
 
 # Foreground on purpose — the caller backgrounds this via the harness.
+# stdin is closed: an agent CLI left with an open stdin can block reading it.
 set +e
 if [ "$TRACK" = 1 ]; then
-  "${CMD[@]}" >"$LOG.json" 2>"$LOG"
+  "${CMD[@]}" </dev/null >"$LOG.json" 2>"$LOG"
   status=$?
   python3 "$AGENT_USAGE_PY" answer agy "$LOG.json" >>"$LOG" 2>/dev/null \
     || echo "agy-delegate: no final reply in $LOG.json (run died early? see the log above)" >>"$LOG"
   python3 "$AGENT_USAGE_PY" record agy "$LOG.json" --label "agy:$(basename "$BRIEF")" >&2 \
     || echo "agy-delegate: usage not recorded" >&2
 else
-  "${CMD[@]}" >"$LOG" 2>&1
+  "${CMD[@]}" </dev/null >"$LOG" 2>&1
   status=$?
 fi
 set -e
